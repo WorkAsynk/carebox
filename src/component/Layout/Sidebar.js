@@ -15,17 +15,18 @@ import {
 } from '@heroicons/react/24/outline';
 import logo from "../../assets/logo/logocarebox.png"
 import logoicon from "../../assets/logo/logocareboxicon.png"
+import { Link } from 'react-router-dom';
 
 const menuItems = [
-	{ label: 'Dashboard', icon: <HomeIcon className="h-5 w-5" /> },
-	{ label: 'Orders & Pickups', icon: <TruckIcon className="h-5 w-5" /> },
-	{ label: 'Exceptions & NDR', icon: <ExclamationTriangleIcon className="h-5 w-5" /> },
-	{ label: 'Finances', icon: <BanknotesIcon className="h-5 w-5" /> },
-	{ label: 'Support', icon: <LifebuoyIcon className="h-5 w-5" /> },
-	{ label: 'Reports', icon: <DocumentTextIcon className="h-5 w-5" /> },
-	{ label: 'Information Center', icon: <InformationCircleIcon className="h-5 w-5" /> },
-	{ label: 'Services', icon: <WrenchScrewdriverIcon className="h-5 w-5" /> },
-	{ label: 'Settings', icon: <Cog6ToothIcon className="h-5 w-5" /> },
+	{ label: 'Dashboard', href: "/", icon: <HomeIcon className="h-5 w-5" /> },
+	{ label: 'Orders & Pickups', href: "", icon: <TruckIcon className="h-5 w-5" /> },
+	{ label: 'Exceptions & NDR', href: "", icon: <ExclamationTriangleIcon className="h-5 w-5" /> },
+	{ label: 'Finances', href: "", icon: <BanknotesIcon className="h-5 w-5" /> },
+	{ label: 'Support', href: "", icon: <LifebuoyIcon className="h-5 w-5" /> },
+	{ label: 'Reports', href: "", icon: <DocumentTextIcon className="h-5 w-5" /> },
+	{ label: 'Information Center', href: "", icon: <InformationCircleIcon className="h-5 w-5" /> },
+	{ label: 'Services', href: "", icon: <WrenchScrewdriverIcon className="h-5 w-5" /> },
+	{ label: 'Settings', href: "", icon: <Cog6ToothIcon className="h-5 w-5" /> },
 ];
 
 const Sidebar = () => {
@@ -44,7 +45,7 @@ const Sidebar = () => {
 				<div className="flex items-center  justify-center px-3 py-4 border-b border-red-600">
 					{open ? (<>
 						<div className=''>
-							<img src={logo} alt="" />
+							<img className='h-[80px]' src={logo} alt="" />
 						</div>
 					</>) : (<>
 						<div className=''>
@@ -56,13 +57,15 @@ const Sidebar = () => {
 				{/* Menu Items */}
 				<nav className="flex flex-col mt-4">
 					{menuItems.map((item, idx) => (
-						<div
-							key={idx}
-							className="flex items-center px-4 py-3 hover:bg-red-600 cursor-pointer transition-all"
-						>
-							{item.icon}
-							<span className={`ml-4 text-sm ${!open && 'hidden'}`}>{item.label}</span>
-						</div>
+						<Link to={item.href}>
+							<div
+								key={idx}
+								className="flex items-center px-4 py-3 hover:bg-red-600 cursor-pointer transition-all"
+							>
+								{item.icon}
+								<span className={`ml-4 text-sm ${!open && 'hidden'}`}>{item.label}</span>
+							</div>
+						</Link>
 					))}
 				</nav>
 
@@ -74,7 +77,7 @@ const Sidebar = () => {
 			<button
 				onClick={() => setOpen(!open)}
 				className="fixed top-[3.2rem] left-[4%] z-50 p-1 rounded-md bg-gray-800 border border-red-500 hover:bg-red-600 transition-all duration-300"
-				style={{ transform: open ? 'translateX(190px) translatey(25px)' : 'translateX(0)' }}
+				style={{ transform: open ? 'translateX(170px) translatey(45px)' : 'translateX(0)' }}
 			>
 				{open ? (
 					<ChevronDoubleLeftIcon className="h-5 w-5 text-white" />
