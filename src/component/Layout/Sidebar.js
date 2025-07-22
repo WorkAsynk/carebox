@@ -16,9 +16,13 @@ import {
 import logo from "../../assets/logo/logocarebox.png"
 import logoicon from "../../assets/logo/logocareboxicon.png"
 import { Link } from 'react-router-dom';
+import { FaUser } from 'react-icons/fa';
+
+
 
 const menuItems = [
 	{ label: 'Dashboard', href: "/", icon: <HomeIcon className="h-5 w-5" /> },
+	{ label: 'Create User', href: "/create-user", icon: <FaUser className="h-5 w-5" /> },
 	{ label: 'Orders & Pickups', href: "", icon: <TruckIcon className="h-5 w-5" /> },
 	{ label: 'Exceptions & NDR', href: "", icon: <ExclamationTriangleIcon className="h-5 w-5" /> },
 	{ label: 'Finances', href: "", icon: <BanknotesIcon className="h-5 w-5" /> },
