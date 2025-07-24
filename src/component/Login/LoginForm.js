@@ -11,11 +11,14 @@ const LoginForm = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 
-	const { isAuthenticated, error, loading } = useSelector((state) => state.auth);
+	const { isAuthenticated, error, loading, user } = useSelector((state) => state.auth);
 
+
+	console.log(user)
 
 	useEffect(() => {
 		if (isAuthenticated) {
+			alert("User Login")
 			navigate("/"); // Redirect on login success
 		}
 	}, [isAuthenticated]);
