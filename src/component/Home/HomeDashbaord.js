@@ -5,14 +5,14 @@ import { HiOutlineExclamationCircle, HiOutlineTruck } from 'react-icons/hi';
 
 const HomeDashboard = () => {
 	return (
-		<div className='pr-[2%] pl-[7%] py-[3%] flex flex-col gap-6 p-6'>
+		<div className='pr-[2%] pl-[20%] py-[3%] flex max-w-7xl flex-col gap-6 p-6'>
 
 			{/* Congrats Banner */}
 			<div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl flex items-center justify-between p-6 w-full shadow-md">
 				<div>
 					<h2 className="text-2xl md:text-3xl font-bold mb-2">Congrats, your account has been activated</h2>
 					<p className="mb-4 text-sm md:text-base">Go ahead and create your order now to start shipping</p>
-					<Link to={"/"} className='bg-white text-black px-4 py-2 rounded-md text-sm hover:bg-gray-200 transition'>
+					<Link to={"/create-order"} className='bg-white text-black px-4 py-2 rounded-md text-sm hover:bg-gray-200 transition'>
 						Create Your First Order
 					</Link>
 				</div>

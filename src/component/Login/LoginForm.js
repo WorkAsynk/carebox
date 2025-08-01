@@ -13,13 +13,11 @@ const LoginForm = () => {
 
 	const { isAuthenticated, error, loading, user } = useSelector((state) => state.auth);
 
-
 	console.log(user)
 
 	useEffect(() => {
 		if (isAuthenticated) {
-			alert("User Login")
-			navigate("/"); // Redirect on login success
+			navigate("/");
 		}
 	}, [isAuthenticated]);
 
@@ -68,7 +66,7 @@ const LoginForm = () => {
 					</form>
 
 					<div className="text-lg mt-4 text-center">
-						New to Delhivery? <a href="#" className="text-blue-600 font-medium">Create an account</a>
+						New to Carebox? <a href="#" className="text-blue-600 font-medium">Create an account</a>
 					</div>
 					<div className="text-lg mt-5 text-center">
 						Need help? <a href="#" className="text-blue-600">Read FAQs</a>{" "}

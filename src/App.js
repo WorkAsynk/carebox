@@ -5,6 +5,8 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import { useEffect, useState } from 'react';
 import CreatUser from './pages/CreatUser';
+import CreateOrder from './pages/CreateOrder';
+import Users from './pages/Users';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -32,6 +34,8 @@ function App() {
       <Routes>
         <Route path="/" element={isAuthenticated ? <Home /> : <Login />} />
         <Route path="/create-user" element={isAuthenticated ? <CreatUser /> : <Login />} />
+        <Route path="/create-order" element={isAuthenticated ? <CreateOrder /> : <Login />} />
+        <Route path="/userlist" element={isAuthenticated ? <Users /> : <Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

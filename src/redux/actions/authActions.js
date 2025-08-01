@@ -15,10 +15,6 @@ export const login = (email, password) => async (dispatch) => {
 	dispatch({ type: LOGIN_REQUEST });
 
 	try {
-		// const config = {
-		// 	headers: { "Content-Type": "application/json" },
-		// };
-
 		const { data } = await axios.post(
 			`${process.env.REACT_APP_API_URL}/api/auth/login`, // Use the environment variable here
 			{ email, password },
