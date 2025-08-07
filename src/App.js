@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import CreatUser from './pages/CreatUser';
 import CreateOrder from './pages/CreateOrder';
 import Users from './pages/Users';
+import CreateAddress from './pages/CreateAddress';
+import AddressList from './pages/AddressList';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -34,8 +36,10 @@ function App() {
       <Routes>
         <Route path="/" element={isAuthenticated ? <Home /> : <Login />} />
         <Route path="/create-user" element={isAuthenticated ? <CreatUser /> : <Login />} />
+        <Route path="/create-address" element={isAuthenticated ? <CreateAddress /> : <Login />} />
         <Route path="/create-order" element={isAuthenticated ? <CreateOrder /> : <Login />} />
         <Route path="/userlist" element={isAuthenticated ? <Users /> : <Login />} />
+        <Route path="/addresslist" element={isAuthenticated ? <AddressList /> : <Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

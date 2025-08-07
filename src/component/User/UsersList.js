@@ -88,8 +88,8 @@ const UsersList = ({ users }) => {
 						<div className="text-gray-800 truncate overflow-hidden max-w-[180px]">
 							{user.email}
 						</div>
-						<div className="text-gray-800">{user.to_name || '-'}</div>
-						<div className="text-gray-800">{user.to_location || '-'}</div>
+						<div className="text-gray-800">{user.co_name || '-'}</div>
+						<div className="text-gray-800">{user.co_location || '-'}</div>
 						<div className="text-gray-800 font-normal">{user.role}</div>
 					</div>
 				))}

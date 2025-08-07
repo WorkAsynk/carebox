@@ -15,16 +15,19 @@ import {
 	ChevronDownIcon,
 	ChevronUpIcon,
 	ArrowRightEndOnRectangleIcon,
+	BuildingLibraryIcon,
+	BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
 import logo from "../../assets/logo/logocarebox.png";
 import logoicon from "../../assets/logo/logocareboxicon.png";
 import { Link, useNavigate } from 'react-router-dom';
-import { FaCaretDown, FaUser, FaUserAlt } from 'react-icons/fa';
+import { FaAddressBook, FaCaretDown, FaUser, FaUserAlt } from 'react-icons/fa';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../redux/actions/authActions';
 import { FaBox, FaCaretUp } from 'react-icons/fa6';
 import { TiUserAdd } from 'react-icons/ti';
 import { PiUserList } from 'react-icons/pi';
+import { IoIosCreate } from 'react-icons/io';
 
 const menuItems = [
 	{ label: 'Dashboard', href: '/', icon: <HomeIcon className="h-5 w-5" /> },
@@ -38,6 +41,13 @@ const menuItems = [
 		label: 'Orders & Pickups', icon: <TruckIcon className="h-5 w-5" />
 		, children: [
 			{ label: 'Create Order', icon: <FaBox className='h-5 w-5' />, href: '/create-order', }
+		]
+	},
+	{
+		label: 'Warehouse', icon: <BuildingOfficeIcon className="w-5 h-5" />
+		, children: [
+			{ label: 'Create Address', icon: <IoIosCreate className='h-5 w-5' />, href: '/create-address', },
+			{ label: 'Address List', icon: <FaBox className='h-5 w-5' />, href: '/addresslist', }
 		]
 	},
 	{ label: 'Exceptions & NDR', href: '', icon: <ExclamationTriangleIcon className="h-5 w-5" /> },
@@ -95,7 +105,7 @@ const Sidebar = () => {
 										<div className="ml-10 space-y-3 text-sm">
 											{item.children.map((child, cIdx) => (
 												<Link to={child.href} key={cIdx}>
-													<div className="py-1 flex justify-start items-start gap-3 text-md hover:text-red-400 cursor-pointer">
+													<div className="px-4 py-2 flex justify-start items-start gap-3 text-md hover:text-red-400 cursor-pointer">
 														{child.icon}
 														<span>{child.label}</span>
 													</div>

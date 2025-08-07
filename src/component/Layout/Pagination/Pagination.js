@@ -72,12 +72,11 @@ const Pagination = ({ page, totalPages, setPage }) => {
 						value={page.toString()}
 						onChange={(val) => setPage(Number(val))}
 						className="w-32 text-sm pr-16" // space for GO button
-						containerProps={{
-							className: "min-w-[100px]",
-						}}
+						containerProps={{ className: "min-w-[66px]" }}
 						menuProps={{
 							className: "z-[999]",
 						}}
+						defaultValue={"1"}
 						color="red"
 					>
 						{Array.from({ length: totalPages }, (_, i) => (
@@ -90,7 +89,7 @@ const Pagination = ({ page, totalPages, setPage }) => {
 					<Button
 						onClick={() => { }}
 						size="sm"
-						className="!absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-[#000] hover:opacity-90 text-white px-4 py-1 text-xs normal-case shadow-md"
+						className="!absolute right-0 top-1/2 h-full -translate-y-1/2 bg-[#000] hover:opacity-90 text-white px-4 py-1 text-xs normal-case shadow-md"
 					>
 						GO
 					</Button>

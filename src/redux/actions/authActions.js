@@ -56,7 +56,7 @@ export const registerAdmin = (formData) => async (dispatch) => {
 		};
 
 		const { data } = await axios.post(
-			`${process.env.REACT_APP_API_URL}/api/admin/registerNew`, // proxy handles this in development
+			`${process.env.REACT_APP_API_URL}/api/admin/registerNewUser`, // proxy handles this in development
 			formData,
 			config
 		);
