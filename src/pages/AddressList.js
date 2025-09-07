@@ -3,13 +3,14 @@ import Topbar from '../component/Layout/Topbar'
 import Sidebar from '../component/Layout/Sidebar'
 import axios from 'axios'
 import Address from '../component/AddressList/Address'
+import { buildApiUrl, API_ENDPOINTS } from '../config/api'
 
 const AddressList = () => {
 	const [address, setaddress] = useState([])
 	useEffect(() => {
 		const fetchAddress = async () => {
 			try {
-				const res = await axios.get('https://grc-logistics-backend.onrender.com/api/admin/fetchAllAddresses');
+				const res = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_ADDRESSES));
 				setaddress(res.data.addresses || []);
 			} catch (error) {
 				console.error('Error fetching users:', error);

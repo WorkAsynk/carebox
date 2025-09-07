@@ -4,7 +4,7 @@ module.exports = function (app) {
 	app.use(
 		"/api",
 		createProxyMiddleware({
-			target: "https://grc-logistics-backend.onrender.com",
+			target: "https://carebox-backend.onrender.com",
 			changeOrigin: true,
 		})
 	);

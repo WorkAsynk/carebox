@@ -8,6 +8,7 @@ import {
 	REGISTER_SUCCESS,
 	REGISTER_FAILURE,
 } from "../constants/authConstants";
+import { buildApiUrl, API_ENDPOINTS } from "../../config/api";
 
 
 // LOGIN
@@ -16,7 +17,7 @@ export const login = (email, password) => async (dispatch) => {
 
 	try {
 		const { data } = await axios.post(
-			`${process.env.REACT_APP_API_URL}/api/auth/login`, // Use the environment variable here
+			buildApiUrl(API_ENDPOINTS.LOGIN),
 			{ email, password },
 			{
 				headers: { "Content-Type": "application/json" },
@@ -56,7 +57,7 @@ export const registerAdmin = (formData) => async (dispatch) => {
 		};
 
 		const { data } = await axios.post(
-			`${process.env.REACT_APP_API_URL}/api/admin/registerNewUser`, // proxy handles this in development
+			buildApiUrl(API_ENDPOINTS.REGISTER),
 			formData,
 			config
 		);

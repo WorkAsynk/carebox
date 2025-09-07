@@ -21,42 +21,100 @@ import {
 import logo from "../../assets/logo/logocarebox.png";
 import logoicon from "../../assets/logo/logocareboxicon.png";
 import { Link, useNavigate } from 'react-router-dom';
-import { FaAddressBook, FaCaretDown, FaUser, FaUserAlt } from 'react-icons/fa';
-import { useDispatch } from 'react-redux';
+import { FaAddressBook, FaCaretDown, FaList, FaUser, FaUserAlt } from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/actions/authActions';
 import { FaBox, FaCaretUp } from 'react-icons/fa6';
 import { TiUserAdd } from 'react-icons/ti';
 import { PiUserList } from 'react-icons/pi';
 import { IoIosCreate } from 'react-icons/io';
+import { CalculatorIcon } from '@heroicons/react/24/outline';
 
 const menuItems = [
-	{ label: 'Dashboard', href: '/', icon: <HomeIcon className="h-5 w-5" /> },
+	{ 
+		label: 'Dashboard', 
+		href: '/', 
+		icon: <HomeIcon className="h-5 w-5" />,
+		allowedRoles: [] // All authenticated users
+	},
 	{
-		label: 'User', icon: <FaUser className="h-5 w-5" />, children: [
-			{ label: 'Create User', icon: <TiUserAdd className='h-5 w-5' />, href: '/create-user' },
-			{ label: 'User List', icon: <PiUserList className='h-5 w-5' />, href: '/userlist' },
+		label: 'User', 
+		icon: <FaUser className="h-5 w-5" />, 
+		allowedRoles: ['Admin'], // Only Admin can see User management
+		children: [
+			{ label: 'Create User', icon: <TiUserAdd className='h-5 w-5' />, href: '/create-user', allowedRoles: ['Admin'] },
+			{ label: 'User List', icon: <PiUserList className='h-5 w-5' />, href: '/userlist', allowedRoles: ['Admin'] },
+		]
+	},	
+	{
+		label: 'Orders & Pickups', 
+		icon: <TruckIcon className="h-5 w-5" />,
+		allowedRoles: ['Admin', 'Franchise', 'Developer'], // Based on your route changes
+		children: [
+			{ label: 'Create Order', icon: <FaBox className='h-5 w-5' />, href: '/create-order', allowedRoles: ['Admin', 'Franchise', 'Developer'] },
+			{ label: 'Order List', icon: <FaList className='h-5 w-5' />, href: '/orderlist', allowedRoles: ['Admin', 'Franchise', 'Operational Manager', 'Developer'] }
 		]
 	},
 	{
-		label: 'Orders & Pickups', icon: <TruckIcon className="h-5 w-5" />
-		, children: [
-			{ label: 'Create Order', icon: <FaBox className='h-5 w-5' />, href: '/create-order', }
+		label: 'Warehouse', 
+		icon: <BuildingOfficeIcon className="w-5 h-5" />,
+		allowedRoles: ['Admin', 'Franchise', 'Operational Manager'],
+		children: [
+			{ label: 'Create Address', icon: <IoIosCreate className='h-5 w-5' />, href: '/create-address', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] },
+			{ label: 'Address List', icon: <FaBox className='h-5 w-5' />, href: '/addresslist', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] }
 		]
 	},
 	{
-		label: 'Warehouse', icon: <BuildingOfficeIcon className="w-5 h-5" />
-		, children: [
-			{ label: 'Create Address', icon: <IoIosCreate className='h-5 w-5' />, href: '/create-address', },
-			{ label: 'Address List', icon: <FaBox className='h-5 w-5' />, href: '/addresslist', }
+		label: 'Rate Calculator', 
+		icon: <CalculatorIcon className="w-5 h-5" />,
+		allowedRoles: ['Admin', 'Franchise', 'Operational Manager', 'Developer'], // All except Client
+		children: [
+			{ label: 'International Calculator', icon: <CalculatorIcon className='h-5 w-5' />, href: '/international-calculator', allowedRoles: ['Admin', 'Franchise', 'Operational Manager', 'Developer'] },
+			{ label: 'Domestic Calculator', icon: <CalculatorIcon className='h-5 w-5' />, href: '/domestic-calculator', allowedRoles: ['Admin', 'Franchise', 'Operational Manager', 'Developer'] }
 		]
 	},
-	{ label: 'Exceptions & NDR', href: '', icon: <ExclamationTriangleIcon className="h-5 w-5" /> },
-	{ label: 'Finances', href: '', icon: <BanknotesIcon className="h-5 w-5" /> },
-	{ label: 'Support', href: '', icon: <LifebuoyIcon className="h-5 w-5" /> },
-	{ label: 'Reports', href: '', icon: <DocumentTextIcon className="h-5 w-5" /> },
-	{ label: 'Information Center', href: '', icon: <InformationCircleIcon className="h-5 w-5" /> },
-	{ label: 'Services', href: '', icon: <WrenchScrewdriverIcon className="h-5 w-5" /> },
-	{ label: 'Settings', href: '', icon: <Cog6ToothIcon className="h-5 w-5" /> },
+	{ 
+		label: 'Exceptions & NDR', 
+		href: '', 
+		icon: <ExclamationTriangleIcon className="h-5 w-5" />,
+		allowedRoles: ['Admin', 'Franchise', 'Operational Manager']
+	},
+	{ 
+		label: 'Finances', 
+		href: '', 
+		icon: <BanknotesIcon className="h-5 w-5" />,
+		allowedRoles: ['Admin', 'Franchise']
+	},
+	{ 
+		label: 'Support', 
+		href: '', 
+		icon: <LifebuoyIcon className="h-5 w-5" />,
+		allowedRoles: [] // All authenticated users
+	},
+	{ 
+		label: 'Reports', 
+		href: '', 
+		icon: <DocumentTextIcon className="h-5 w-5" />,
+		allowedRoles: ['Admin', 'Franchise', 'Operational Manager']
+	},
+	{ 
+		label: 'Information Center', 
+		href: '', 
+		icon: <InformationCircleIcon className="h-5 w-5" />,
+		allowedRoles: [] // All authenticated users
+	},
+	{ 
+		label: 'Services', 
+		href: '', 
+		icon: <WrenchScrewdriverIcon className="h-5 w-5" />,
+		allowedRoles: ['Admin', 'Developer']
+	},
+	{ 
+		label: 'Settings', 
+		href: '', 
+		icon: <Cog6ToothIcon className="h-5 w-5" />,
+		allowedRoles: ['Admin']
+	},
 ];
 
 const Sidebar = () => {
@@ -65,6 +123,43 @@ const Sidebar = () => {
 
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
+	const user = useSelector((state) => state.auth?.user);
+	const userRole = user?.role;
+
+	// Function to check if user has access to menu item
+	const hasAccess = (allowedRoles) => {
+		// If no roles specified, allow all authenticated users
+		if (!allowedRoles || allowedRoles.length === 0) {
+			return true;
+		}
+		// Check if user's role is in allowed roles
+		return allowedRoles.includes(userRole);
+	};
+
+	// Filter menu items based on user role
+	const getFilteredMenuItems = () => {
+		return menuItems.filter(item => {
+			// Check if user has access to main menu item
+			if (!hasAccess(item.allowedRoles)) {
+				return false;
+			}
+
+			// If item has children, filter them too
+			if (item.children) {
+				const filteredChildren = item.children.filter(child => hasAccess(child.allowedRoles));
+				// Only show parent if it has accessible children
+				if (filteredChildren.length === 0) {
+					return false;
+				}
+				// Update the item with filtered children
+				item.filteredChildren = filteredChildren;
+			}
+
+			return true;
+		});
+	};
+
+	const filteredMenuItems = getFilteredMenuItems();
 
 	const handleLogout = () => {
 		dispatch(logout());
@@ -87,7 +182,7 @@ const Sidebar = () => {
 				</div>
 
 				<nav className="flex flex-col mt-4">
-					{menuItems.map((item, idx) => (
+					{filteredMenuItems.map((item, idx) => (
 						<div key={idx}>
 							{item.children ? (
 								<>
@@ -103,7 +198,7 @@ const Sidebar = () => {
 									</div>
 									{open && openDropdown === idx && (
 										<div className="ml-10 space-y-3 text-sm">
-											{item.children.map((child, cIdx) => (
+											{(item.filteredChildren || item.children).map((child, cIdx) => (
 												<Link to={child.href} key={cIdx}>
 													<div className="px-4 py-2 flex justify-start items-start gap-3 text-md hover:text-red-400 cursor-pointer">
 														{child.icon}

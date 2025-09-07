@@ -5,31 +5,36 @@ import { Autocomplete, TextField } from '@mui/material';
 import { FaArrowLeft } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
+import { buildApiUrl, API_ENDPOINTS } from '../../config/api';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
 
 const AddressForm = () => {
-	const navigate = useNavigate()
+	const navigate = useNavigate();
 	const [users, setUsers] = useState([]);
 	const [selectedUser, setSelectedUser] = useState(null);
-	const [loading, setLoading] = useState(false)
+	const [loading, setLoading] = useState(false);
+	const [showOverlay, setShowOverlay] = useState(false);
+	const [overlayStatus, setOverlayStatus] = useState('loading'); // 'loading' | 'success'
+
+	// ✅ Use final field names in state
 	const [formData, setFormData] = useState({
-		label: '',
+		is_sender: false,        // was: label -> now boolean
+		consignee_name: '',         // was: user_name / consignee_name
+		phone: '',               // was: additional_phone
+		email: '',
 		address_line: '',
-		pincode: '',
 		city: '',
 		state: '',
-		additional_phone: '',
-		consignee_name: '',
-		email: '',
+		pincode: '',
 		country: '',
 		preferred_slot: '',
-		user_id: '', // hidden from UI
+		user_id: '',             // hidden from UI
 	});
 
-	// Fetch all users on mount
 	useEffect(() => {
 		const fetchUsers = async () => {
 			try {
-				const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/fetchAllUsers`);
+				const res = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_USERS));
 				setUsers(res.data.user || []);
 			} catch (err) {
 				console.error('Error fetching users', err);
@@ -38,79 +43,79 @@ const AddressForm = () => {
 		fetchUsers();
 	}, []);
 
-	console.log(users)
-
-	// Handle form changes
 	const handleChange = (e) => {
 		const { name, value } = e.target;
-		setFormData((prev) => ({ ...prev, [name]: value }));
+		setFormData(prev => ({ ...prev, [name]: value }));
 	};
 
-	// Handle submit
 	const handleSubmit = async (e) => {
-		setLoading(true); // Set loading to true when the form is submitted
 		e.preventDefault();
+		setLoading(true);
+		setShowOverlay(true);
+		setOverlayStatus('loading');
 
 		if (!selectedUser) {
 			toast.error('Please select a consignee from suggestions');
-			setLoading(false); // Make sure to stop the loading when validation fails
-			return;
-		}
-		if (!formData?.address_line) {
-			toast.error('Please Add Address');
-			setLoading(false); // Make sure to stop the loading when validation fails
-			return;
-		}
-		if (!formData?.city) {
-			toast.error('Please Add City');
-			setLoading(false); // Make sure to stop the loading when validation fails
-			return;
-		}
-		if (!formData?.country) {
-			toast.error('Please Add Country');
-			setLoading(false); // Make sure to stop the loading when validation fails
-			return;
-		}
-		if (!formData?.pincode) {
-			toast.error('Please Add Pincode');
-			setLoading(false); // Make sure to stop the loading when validation fails
-			return;
-		}
-		if (!formData?.email) {
-			toast.error('Please Add Email address');
-			setLoading(false); // Make sure to stop the loading when validation fails
-			return;
-		}
-		if (!formData?.preferred_slot) {
-			toast.error('Please Select Slot');
-			setLoading(false); // Make sure to stop the loading when validation fails
-			return;
-		}
-		if (!formData?.consignee_name) {
-			toast.error('Please Add Contact Person Name');
-			setLoading(false); // Make sure to stop the loading when validation fails
+			setLoading(false);
+			setShowOverlay(false);
 			return;
 		}
 
+		// Basic validations
+		const required = [
+			['address_line', 'Please add Address'],
+			['city', 'Please add City'],
+			['country', 'Please add Country'],
+			['pincode', 'Please add Pincode'],
+			['email', 'Please add Email address'],
+			['preferred_slot', 'Please select Slot'],
+			['consignee_name', 'Please add Contact Person Name'],
+		];
+		for (const [key, msg] of required) {
+			if (!String(formData[key] || '').trim()) {
+				toast.error(msg);
+				setLoading(false);
+				setShowOverlay(false);
+				return;
+			}
+		}
 
-		const payload = { ...formData, user_id: selectedUser.id };
+		// ✅ Final payload with remapped keys
+		const payload = {
+			is_sender: formData.is_sender,
+			consignee_name: formData.consignee_name,
+			phone: formData.phone,
+			email: formData.email,
+			address_line: formData.address_line,
+			city: formData.city,
+			state: formData.state,
+			pincode: formData.pincode,
+			country: formData.country,
+			preferred_slot: formData.preferred_slot,
+			user_id: selectedUser.id,
+		};
 
 		try {
-			const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/createAddress`, payload);
+			const res = await axios.post(buildApiUrl(API_ENDPOINTS.CREATE_ADDRESS), payload);
 			if (res.data.success) {
+				setOverlayStatus('success');
 				toast.success('Address added successfully');
-				navigate('/')
+				setTimeout(() => {
+					setShowOverlay(false);
+					navigate('/');
+				}, 800);
 			} else {
 				toast.error(res.data.message || 'Something went wrong');
+				setShowOverlay(false);
 			}
 		} catch (err) {
 			toast.error('This is a database error, please inform authorities');
 			console.error(err);
+			setShowOverlay(false);
 		} finally {
-			setLoading(false); // Ensure this runs after success or failure
+			setLoading(false);
 		}
 	};
-
 
 	return (
 		<>
@@ -128,76 +133,104 @@ const AddressForm = () => {
 						</div>
 					</div>
 
+					{/* User Detail */}
 					<div className="space-y-2 bg-white p-6 rounded-md shadow-sm">
-						<h2 className="font-semibold text-gray-700">User Detail
-						</h2>
+						<h2 className="font-semibold text-gray-700">User Detail</h2>
 						<div className="grid grid-cols-2 gap-4">
-
 							<Autocomplete
 								options={users}
-								getOptionLabel={(option) => option.name || ''}
+								// Fallbacks so it doesn't crash if name is missing
+								getOptionLabel={(option) => option?.name || option?.email || ''}
 								onChange={(e, newValue) => setSelectedUser(newValue)}
 								renderInput={(params) => (
 									<TextField
 										{...params}
 										label="Consignee Name (Search user)"
 										required
-										sx={{
-											width: '100%',  // Ensure it fills available space
-											height: '50px', // Adjust the height to match other fields
-										}}
+										fullWidth
 									/>
 								)}
 							/>
-							<Select
-								label="Select Address Type"
-								name="label"
-								value={formData.label}
-								onChange={(val) => setFormData({ ...formData, label: val })}
-								required
-							>
-								<Option value="Sender">Sender</Option>
-								<Option value="Reciver">Reciver</Option>
-							</Select>
+
+							{/* ✅ Replaced Sender/Receiver select with a boolean checkbox */}
+							<div className="flex items-center h-full">
+								<div className="flex items-center h-full">
+									<Checkbox
+										label="Sender"
+										checked={formData.is_sender === true}
+										onChange={(e) =>
+											setFormData(prev => ({ ...prev, is_sender: true }))
+										}
+									/>
+									<Checkbox
+										label="Receiver"
+										checked={formData.is_sender === false}
+										onChange={(e) =>
+											setFormData(prev => ({ ...prev, is_sender: false }))
+										}
+									/>
+								</div>
+							</div>
 						</div>
 					</div>
+
+					{/* Address Detail */}
 					<div className="space-y-2 bg-white p-6 mt-5 rounded-md shadow-sm">
-						<h2 className="font-semibold text-gray-700">Address Detail
-						</h2>
+						<h2 className="font-semibold text-gray-700">Address Detail</h2>
+
+						{/* ✅ client_name replaces consignee_name */}
 						<Input label="Contact Person Name" name="consignee_name" onChange={handleChange} />
+
 						<div className="grid grid-cols-2 gap-4">
 							<Input label="Email" name="email" onChange={handleChange} />
-							<Input label="Additional Phone" name="additional_phone" onChange={handleChange} />
+							{/* ✅ phone replaces additional_phone */}
+							<Input label="Phone" name="phone" onChange={handleChange} />
 							<Input label="Address Line" name="address_line" onChange={handleChange} />
 							<Input label="City" name="city" onChange={handleChange} />
 							<Input label="State" name="state" onChange={handleChange} />
 							<Input label="Pincode" name="pincode" onChange={handleChange} />
 							<Input label="Country" name="country" onChange={handleChange} />
+
 							<Select
 								label="Select Slot"
 								name="preferred_slot"
 								value={formData.preferred_slot}
-								onChange={(val) => setFormData({ ...formData, preferred_slot: val })}
+								onChange={(val) => setFormData(prev => ({ ...prev, preferred_slot: val }))}
 								required
 							>
 								<Option value="1">1:00pm - 4:00pm</Option>
 								<Option value="2">4:00pm - 7:00pm</Option>
 								<Option value="3">7:00pm - 10:00pm</Option>
 							</Select>
-
 						</div>
 					</div>
+
 					<div className="flex justify-end gap-4 mt-4">
-						<Button
-							onClick={handleSubmit}
-							disabled={loading}
-							className=""
-						>
-							{loading ? "Submiting..." : "Submit"}
+						<Button onClick={handleSubmit} disabled={loading}>
+							{loading ? 'Submitting...' : 'Submit'}
 						</Button>
 					</div>
 				</div>
 			</div>
+
+			{showOverlay && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+					<div className="bg-white rounded-lg p-6 shadow-xl w-[90%] max-w-sm text-center">
+						{overlayStatus === 'loading' && (
+							<div className="flex flex-col items-center">
+								<div className="h-12 w-12 rounded-full border-4 border-gray-200 border-t-gray-700 animate-spin mb-3"></div>
+								<p className="text-gray-700 text-sm">Submitting address...</p>
+							</div>
+						)}
+						{overlayStatus === 'success' && (
+							<div className="flex flex-col items-center">
+								<CheckCircleIcon className="w-14 h-14 text-green-500" />
+								<p className="text-gray-700 text-sm mt-2">Address added successfully</p>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
 		</>
 	);
 };

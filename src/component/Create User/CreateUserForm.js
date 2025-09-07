@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerAdmin } from '../../redux/actions/authActions';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { Input, Option, Select } from '@material-tailwind/react';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
 
 const CreateUserForm = () => {
 	const dispatch = useDispatch();
-	const { loading } = useSelector((state) => state.auth);
+	const { loading, registerSuccess, error } = useSelector((state) => state.auth);
 	const [showPassword, setShowPassword] = useState(false);
+	const [showOverlay, setShowOverlay] = useState(false);
+	const [overlayStatus, setOverlayStatus] = useState('loading'); // 'loading' | 'success'
 	const navigate = useNavigate();
 
 	const [formData, setFormData] = useState({
@@ -19,6 +22,7 @@ const CreateUserForm = () => {
 		co_name: '',
 		co_location: '',
 		role: '',
+		mf_no: '',
 		password: '',
 	});
 
@@ -28,10 +32,31 @@ const CreateUserForm = () => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
 
+	useEffect(() => {
+		if (loading) {
+			setShowOverlay(true);
+			setOverlayStatus('loading');
+			return;
+		}
+		if (!loading && registerSuccess) {
+			setOverlayStatus('success');
+			setShowOverlay(true);
+			const t = setTimeout(() => {
+				setShowOverlay(false);
+				navigate('/userlist');
+			}, 800);
+			return () => clearTimeout(t);
+		}
+		if (!loading && error) {
+			setShowOverlay(false);
+		}
+	}, [loading, registerSuccess, error]);
+
 	const handleSubmit = (e) => {
 		e.preventDefault();
+		setShowOverlay(true);
+		setOverlayStatus('loading');
 		dispatch(registerAdmin(formData));
-		navigate('/');
 	};
 
 	return (
@@ -75,7 +100,20 @@ const CreateUserForm = () => {
 							<Option value="Developer">Developer</Option>
 							<Option value="Client">Client</Option>
 							<Option value="Operation Manager">Operation Manager</Option>
+							<Option value="Franchise">Franchise</Option>
 						</Select>
+					</div>
+
+					<div className={`transition-all duration-300 overflow-hidden ${formData.role === 'Franchise' ? 'max-h-28 opacity-100 ' : 'max-h-0 opacity-0'}`}>
+						<Input
+							id="mf_no"
+							type="number"
+							name="mf_no"
+							label="MF Number"
+							value={formData.mf_no}
+							onChange={handleChange}
+							required={formData.role === 'Franchise'}
+						/>
 					</div>
 
 					<div>
@@ -110,6 +148,25 @@ const CreateUserForm = () => {
 					</button>
 				</form>
 			</div>
+
+			{showOverlay && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+					<div className="bg-white rounded-lg p-6 shadow-xl w-[90%] max-w-sm text-center">
+						{overlayStatus === 'loading' && (
+							<div className="flex flex-col items-center">
+								<div className="h-12 w-12 rounded-full border-4 border-gray-200 border-t-gray-700 animate-spin mb-3"></div>
+								<p className="text-gray-700 text-sm">Creating user...</p>
+							</div>
+						)}
+						{overlayStatus === 'success' && (
+							<div className="flex flex-col items-center">
+								<CheckCircleIcon className="w-14 h-14 text-green-500" />
+								<p className="text-gray-700 text-sm mt-2">User created successfully</p>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

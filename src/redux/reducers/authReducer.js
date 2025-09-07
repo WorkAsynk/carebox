@@ -10,18 +10,22 @@ import {
 
 // Safe user load from localStorage
 let userFromStorage = null;
+let isAuthenticatedFromStorage = false;
 try {
 	const storedUser = localStorage.getItem("user");
-	userFromStorage = storedUser ? JSON.parse(storedUser) : null;
+	const parsed = storedUser ? JSON.parse(storedUser) : null;
+	userFromStorage = parsed?.user || null;
+	isAuthenticatedFromStorage = Boolean(parsed?.success);
 } catch (error) {
 	console.warn("Invalid JSON in localStorage:", error);
 	userFromStorage = null;
+	isAuthenticatedFromStorage = false;
 }
 
 const initialState = {
 	loading: false,
-	isAuthenticated: userFromStorage?.success || false,
-	user: userFromStorage || null,
+	isAuthenticated: isAuthenticatedFromStorage,
+	user: userFromStorage,
 	error: null,
 };
 
@@ -34,8 +38,8 @@ export const authReducer = (state = initialState, action) => {
 			return {
 				...state,
 				loading: false,
-				isAuthenticated: action.payload.success,
-				user: action.payload,
+				isAuthenticated: Boolean(action.payload?.success),
+				user: action.payload?.user || null,
 				error: null,
 			};
 
@@ -73,7 +77,6 @@ export const authReducer = (state = initialState, action) => {
 				registerSuccess: false,
 				error: action.payload,
 			};
-
 
 		default:
 			return state;

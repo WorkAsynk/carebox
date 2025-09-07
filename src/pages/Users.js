@@ -3,6 +3,7 @@ import Sidebar from '../component/Layout/Sidebar';
 import Topbar from '../component/Layout/Topbar';
 import axios from 'axios';
 import UsersList from '../component/User/UsersList';
+import { buildApiUrl, API_ENDPOINTS } from '../config/api';
 
 
 
@@ -12,7 +13,7 @@ const Users = () => {
 	useEffect(() => {
 		const fetchUsers = async () => {
 			try {
-				const res = await axios.get('https://grc-logistics-backend.onrender.com/api/admin/fetchAllUsers');
+				const res = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_USERS));
 				setUsers(res.data.user || []);
 			} catch (error) {
 				console.error('Error fetching users:', error);
@@ -22,7 +23,7 @@ const Users = () => {
 	}, []);
 
 	console.log(users)
-	return (
+	return (	
 		<div className='flex'>
 			<Sidebar />
 			<div className='flex-1'>

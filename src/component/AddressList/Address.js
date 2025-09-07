@@ -12,9 +12,12 @@ const Address = ({ address }) => {
 	const usersPerPage = 10;
 
 	const filteredUsers = address
-		?.filter(user =>
-			activeTab === 'All' || user?.label?.toLowerCase() === activeTab.toLowerCase()
-		)
+		?.filter(user => {
+			if (activeTab === 'All') return true;
+			if (activeTab.toLowerCase() === 'sender') return user?.is_sender === true;
+			if (activeTab.toLowerCase() === 'receiver') return user?.is_sender === false;
+			return true;
+		})
 		?.filter(user =>
 			user?.consignee_name?.toLowerCase().includes(searchTerm.toLowerCase())
 		);
@@ -87,9 +90,9 @@ const Address = ({ address }) => {
 						key={idx}
 						className='grid grid-cols-7 text-sm px-4 py-3 border-b hover:bg-gray-50 min-w-[800px]'
 					>
-						<div className='text-gray-800'>{user.user_name}</div>
+						<div className='text-gray-800'>{user.client_name}</div>
 						<div className='text-gray-800'>{user.consignee_name || '-'}</div>
-						<div className='text-gray-800'>{user.additional_phone}</div>
+						<div className='text-gray-800'>{user.phone}</div>
 						<div className='text-gray-800 truncate overflow-hidden max-w-[180px]'>
 							{user.email}
 						</div>
@@ -100,7 +103,7 @@ const Address = ({ address }) => {
 							</p>
 						</div>
 						<div className='text-gray-800'>{user.pincode || '-'}</div>
-						<div className='text-gray-800 font-normal'>{user.label}</div>
+						<div className='text-gray-800 font-normal'>{user?.is_sender === false ? "Receiver" : "Sender"}</div>
 					</div>
 				))}
 			</div>
