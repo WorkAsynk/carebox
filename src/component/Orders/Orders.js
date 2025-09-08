@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { FaArrowLeft, FaTrash, FaPlus, FaEdit } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus } from 'react-icons/fa';
 import { Input } from '@material-tailwind/react';
 import Pagination from '../Layout/Pagination/Pagination';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { buildApiUrl, API_ENDPOINTS } from '../../config/api';
+import { TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 
 const Orders = ({orders, handleDeleteOrder}) => {
@@ -213,12 +214,23 @@ const Orders = ({orders, handleDeleteOrder}) => {
                           </span>
                       </div>
                     <div className="text-gray-800">
-                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                             <Link to={`/edit-order/${order.id}`}>
-                                <FaEdit className='text-red-500 text-xl hover:text-red-600' />
+                                <button 
+                                    className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Edit Order"
+                                >
+                                    <PencilIcon className="w-4 h-4" />
+                                </button>
                             </Link>
-                            <FaTrash onClick={() => handleDeleteOrder(order.id)} className='text-red-500 text-xl hover:text-red-600' /> 
-                        </button>
+                            <button 
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete Order"
+                            >
+                                <TrashIcon className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>  
             ))

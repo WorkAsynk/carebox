@@ -4,7 +4,7 @@ import { registerAdmin } from '../../redux/actions/authActions';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { Input, Option, Select } from '@material-tailwind/react';
-import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, MapPinIcon } from '@heroicons/react/24/solid';
 
 const CreateUserForm = () => {
 	const dispatch = useDispatch();
@@ -12,6 +12,7 @@ const CreateUserForm = () => {
 	const [showPassword, setShowPassword] = useState(false);
 	const [showOverlay, setShowOverlay] = useState(false);
 	const [overlayStatus, setOverlayStatus] = useState('loading'); // 'loading' | 'success'
+	const [currentStep, setCurrentStep] = useState(1);
 	const navigate = useNavigate();
 
 	const [formData, setFormData] = useState({
@@ -26,10 +27,30 @@ const CreateUserForm = () => {
 		password: '',
 	});
 
+	const [addressData, setAddressData] = useState({
+		addressLine1: '',
+		addressLine2: '',
+		landmark: '',
+		city: '',
+		pincode: '',
+	});
+
 	const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
 	const handleChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
+	};
+
+	const handleAddressChange = (e) => {
+		setAddressData({ ...addressData, [e.target.name]: e.target.value });
+	};
+
+	const nextStep = () => {
+		setCurrentStep(currentStep + 1);
+	};
+
+	const prevStep = () => {
+		setCurrentStep(currentStep - 1);
 	};
 
 	useEffect(() => {
@@ -56,7 +77,14 @@ const CreateUserForm = () => {
 		e.preventDefault();
 		setShowOverlay(true);
 		setOverlayStatus('loading');
-		dispatch(registerAdmin(formData));
+		
+		// Combine user data and address data
+		const completeUserData = {
+			...formData,
+			address: addressData
+		};
+		
+		dispatch(registerAdmin(completeUserData));
 	};
 
 	return (
@@ -101,6 +129,7 @@ const CreateUserForm = () => {
 							<Option value="Client">Client</Option>
 							<Option value="Operation Manager">Operation Manager</Option>
 							<Option value="Franchise">Franchise</Option>
+							<Option value="Accountant">Accountant</Option>
 						</Select>
 					</div>
 

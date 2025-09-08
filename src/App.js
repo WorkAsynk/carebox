@@ -15,6 +15,11 @@ import OrderDetails from './pages/OrderDetails';
 import AccountDetails from './pages/AccountDetails';
 import InternationalCalculator from './pages/InternationalCalculator';
 import DomesticCalculator from './pages/DomesticCalculator';
+import CreateInvoice from './pages/CreateInvoice';
+import InvoiceDownload from './pages/InvoiceDownload';
+import BillingInfo from './pages/BillingInfo';
+import FranchiseBillingInfo from './pages/FranchiseBillingInfo';
+import EditUser from './pages/EditUser';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -36,6 +41,11 @@ function App() {
         <Route path="/create-user" element={
           <ProtectedRoute allowedRoles={['Admin']}>
             <CreatUser />
+          </ProtectedRoute>
+        } />
+        <Route path="/edit-user/:id" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Operational Manager']}>
+            <EditUser />
           </ProtectedRoute>
         } />
         <Route path="/userlist" element={
@@ -87,6 +97,30 @@ function App() {
         <Route path="/domestic-calculator" element={
           <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager', 'Developer']}>
             <DomesticCalculator />
+          </ProtectedRoute>
+        } />
+
+        {/* Invoices - Create Invoice for Admin, Franchise, Operational Manager */}
+        <Route path="/create-invoice" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager']}>
+            <CreateInvoice />
+          </ProtectedRoute>
+        } />
+        <Route path="/invoice-download" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager', 'Developer', 'Client']}>
+            <InvoiceDownload />
+          </ProtectedRoute>
+        } />
+
+        {/* Finance - Billing Info for Admin and Operational Manager only */}
+        <Route path="/billing-info" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Operational Manager']}>
+            <BillingInfo />
+          </ProtectedRoute>
+        } />
+        <Route path="/franchise-billing-info" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Operational Manager', 'Franchise']}>
+            <FranchiseBillingInfo />
           </ProtectedRoute>
         } />
         

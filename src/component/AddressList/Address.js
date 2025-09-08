@@ -3,6 +3,7 @@ import Pagination from '../Layout/Pagination/Pagination';
 import { Link } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { Input } from '@material-tailwind/react';
+import { TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 const Address = ({ address }) => {
 	const [searchTerm, setSearchTerm] = useState('');
@@ -74,7 +75,7 @@ const Address = ({ address }) => {
 			{/* Table */}
 			<div className='overflow-x-auto'>
 				{/* Header Row */}
-				<div className='grid grid-cols-7 text-left bg-[#000] text-white font-semibold px-4 py-3 rounded-t-md text-sm min-w-[800px]'>
+				<div className='grid grid-cols-8 text-left bg-[#000] text-white font-semibold px-4 py-3 rounded-t-md text-sm min-w-[900px]'>
 					<div>Client Name</div>
 					<div>Consignee Name</div>
 					<div>Mobile</div>
@@ -82,13 +83,14 @@ const Address = ({ address }) => {
 					<div>Address</div>
 					<div>Pincode</div>
 					<div>Address Type</div>
+					<div>Actions</div>
 				</div>
 
 				{/* Data Rows */}
 				{paginatedUsers.map((user, idx) => (
 					<div
 						key={idx}
-						className='grid grid-cols-7 text-sm px-4 py-3 border-b hover:bg-gray-50 min-w-[800px]'
+						className='grid grid-cols-8 text-sm px-4 py-3 border-b hover:bg-gray-50 min-w-[900px]'
 					>
 						<div className='text-gray-800'>{user.client_name}</div>
 						<div className='text-gray-800'>{user.consignee_name || '-'}</div>
@@ -104,6 +106,22 @@ const Address = ({ address }) => {
 						</div>
 						<div className='text-gray-800'>{user.pincode || '-'}</div>
 						<div className='text-gray-800 font-normal'>{user?.is_sender === false ? "Receiver" : "Sender"}</div>
+						<div className="text-gray-800">
+							<div className="flex items-center gap-2">
+								<button 
+									className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+									title="Edit Address"
+								>
+									<PencilIcon className="w-4 h-4" />
+								</button>
+								<button 
+									className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+									title="Delete Address"
+								>
+									<TrashIcon className="w-4 h-4" />
+								</button>
+							</div>
+						</div>
 					</div>
 				))}
 			</div>

@@ -14,7 +14,9 @@ export const API_ENDPOINTS = {
   
   // User endpoints
   FETCH_ALL_USERS: '/api/admin/fetchAllUsers',
-  
+  DELETE_USER: '/api/admin/deleteUser',
+  GET_USER: '/api/admin/getUserData',
+  EDIT_USER: '/api/admin/editUser',
   // Address endpoints
   CREATE_ADDRESS: '/api/admin/createAddress',
   FETCH_ALL_ADDRESSES: '/api/admin/fetchAllAddresses',

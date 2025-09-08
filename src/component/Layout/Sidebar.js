@@ -73,41 +73,23 @@ const menuItems = [
 			{ label: 'Domestic Calculator', icon: <CalculatorIcon className='h-5 w-5' />, href: '/domestic-calculator', allowedRoles: ['Admin', 'Franchise', 'Operational Manager', 'Developer'] }
 		]
 	},
-	{ 
-		label: 'Exceptions & NDR', 
-		href: '', 
-		icon: <ExclamationTriangleIcon className="h-5 w-5" />,
-		allowedRoles: ['Admin', 'Franchise', 'Operational Manager']
+	{
+		label: 'Invoices', 
+		icon: <DocumentTextIcon className="w-5 h-5" />,
+		allowedRoles: ['Admin', 'Franchise', 'Operational Manager', 'Developer', 'Client'], // All roles can see section
+		children: [
+			{ label: 'Create Invoice', icon: <IoIosCreate className='h-5 w-5' />, href: '/create-invoice', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] },
+			{ label: 'Invoice Download', icon: <DocumentTextIcon className='h-5 w-5' />, href: '/invoice-download', allowedRoles: ['Admin', 'Franchise', 'Operational Manager', 'Developer', 'Client'] }
+		]
 	},
-	{ 
+	{
 		label: 'Finances', 
-		href: '', 
-		icon: <BanknotesIcon className="h-5 w-5" />,
-		allowedRoles: ['Admin', 'Franchise']
-	},
-	{ 
-		label: 'Support', 
-		href: '', 
-		icon: <LifebuoyIcon className="h-5 w-5" />,
-		allowedRoles: [] // All authenticated users
-	},
-	{ 
-		label: 'Reports', 
-		href: '', 
-		icon: <DocumentTextIcon className="h-5 w-5" />,
-		allowedRoles: ['Admin', 'Franchise', 'Operational Manager']
-	},
-	{ 
-		label: 'Information Center', 
-		href: '', 
-		icon: <InformationCircleIcon className="h-5 w-5" />,
-		allowedRoles: [] // All authenticated users
-	},
-	{ 
-		label: 'Services', 
-		href: '', 
-		icon: <WrenchScrewdriverIcon className="h-5 w-5" />,
-		allowedRoles: ['Admin', 'Developer']
+		icon: <BanknotesIcon className="w-5 h-5" />,
+		allowedRoles: ['Admin', 'Operational Manager', 'Franchise'], // Only Admin and Operational Manager
+		children: [
+			{ label: 'Billing Info', icon: <BanknotesIcon className='h-5 w-5' />, href: '/billing-info', allowedRoles: ['Admin', 'Operational Manager'] },
+			{ label: 'Franchise Billing Info', icon: <BanknotesIcon className='h-5 w-5' />, href: '/franchise-billing-info', allowedRoles: ['Admin', 'Operational Manager', 'Franchise'] }
+		]
 	},
 	{ 
 		label: 'Settings', 

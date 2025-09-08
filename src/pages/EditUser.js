@@ -1,18 +1,18 @@
 import React from 'react'
 import Sidebar from '../component/Layout/Sidebar'
 import Topbar from '../component/Layout/Topbar'
-import MultiStepUserForm from '../component/Create User/MultiStepUserForm'
+import EditUserForm from '../component/Edit User/EditUserForm'
 
-const CreatUser = () => {
+const EditUser = () => {
 	return (
 		<div className='flex'>
 			<Sidebar />
 			<div className='flex-1'>
 				<Topbar />
-				<MultiStepUserForm />
+				<EditUserForm />
 			</div>
 		</div>
 	)
 }
 
-export default CreatUser
+export default EditUser
