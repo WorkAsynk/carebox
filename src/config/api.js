@@ -20,6 +20,8 @@ export const API_ENDPOINTS = {
   // Address endpoints
   CREATE_ADDRESS: '/api/admin/createAddress',
   FETCH_ALL_ADDRESSES: '/api/admin/fetchAllAddresses',
+  DELETE_ADDRESS: '/api/admin/deleteAddress',
+  EDIT_ADDRESS: '/api/admin/editAddress',
   
   // Order endpoints
   CREATE_ORDER: '/api/order/createOrder',

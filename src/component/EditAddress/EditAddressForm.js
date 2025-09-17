@@ -1,0 +1,297 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { Input, Select, Option, Checkbox, Button } from '@material-tailwind/react';
+import { Autocomplete, TextField } from '@mui/material';
+import { FaArrowLeft } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import { buildApiUrl, API_ENDPOINTS } from '../../config/api';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
+
+const EditAddressForm = ({ data, loading, error }) => {
+	const navigate = useNavigate();
+	const [users, setUsers] = useState([]);
+	const [selectedUser, setSelectedUser] = useState(null);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [showOverlay, setShowOverlay] = useState(false);
+	const [overlayStatus, setOverlayStatus] = useState('loading'); // 'loading' | 'success'
+
+	// Form data state
+	const [formData, setFormData] = useState({
+		is_sender: false,
+		consignee_name: '',
+		phone: '',
+		email: '',
+		address_line: '',
+		city: '',
+		state: '',
+		pincode: '',
+		country: '',
+		preferred_slot: '',
+		user_id: '',
+	});
+
+	// Prefill form data when component receives data
+	useEffect(() => {
+		if (data) {
+			setFormData({
+				is_sender: data.is_sender || false,
+				consignee_name: data.consignee_name || '',
+				phone: data.phone || '',
+				email: data.email || '',
+				address_line: data.address_line || '',
+				city: data.city || '',
+				state: data.state || '',
+				pincode: data.pincode || '',
+				country: data.country || '',
+				preferred_slot: data.preferred_slot || '',
+				user_id: data.user_id || '',
+			});
+		}
+	}, [data]);
+
+	useEffect(() => {
+		const fetchUsers = async () => {
+			try {
+				const res = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_USERS));
+				setUsers(res.data.user || []);
+			} catch (err) {
+				console.error('Error fetching users', err);
+			}
+		};
+		fetchUsers();
+	}, []);
+
+	const handleChange = (e) => {
+		const { name, value } = e.target;
+		setFormData(prev => ({ ...prev, [name]: value }));
+	};
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		setIsSubmitting(true);
+		setShowOverlay(true);
+		setOverlayStatus('loading');
+
+		// Basic validations
+		const required = [
+			['address_line', 'Please add Address'],
+			['city', 'Please add City'],
+			['country', 'Please add Country'],
+			['pincode', 'Please add Pincode'],
+			['email', 'Please add Email address'],
+			['preferred_slot', 'Please select Slot'],
+			['consignee_name', 'Please add Contact Person Name'],
+		];
+		for (const [key, msg] of required) {
+			if (!String(formData[key] || '').trim()) {
+				toast.error(msg);
+				setIsSubmitting(false);
+				setShowOverlay(false);
+				return;
+			}
+		}
+
+		// Prepare payload for edit
+		const payload = {
+			address_id: data?.id,
+			is_sender: formData.is_sender,
+			consignee_name: formData.consignee_name,
+			phone: formData.phone,
+			email: formData.email,
+			address_line: formData.address_line,
+			city: formData.city,
+			state: formData.state,
+			pincode: formData.pincode,
+			country: formData.country,
+			preferred_slot: formData.preferred_slot,
+			user_id: formData.user_id,
+		};
+
+		try {
+			const res = await axios.post(buildApiUrl(API_ENDPOINTS.EDIT_ADDRESS), payload);
+			if (res.data.success) {
+				setOverlayStatus('success');
+				toast.success('Address updated successfully');
+				setTimeout(() => {
+					setShowOverlay(false);
+					navigate('/addresslist');
+				}, 800);
+			} else {
+				toast.error(res.data.message || 'Something went wrong');
+				setShowOverlay(false);
+			}
+		} catch (err) {
+			toast.error('Failed to update address');
+			console.error(err);
+			setShowOverlay(false);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	if (loading) return <div className="p-6">Loading...</div>
+	if (error) return <div className="p-6 text-red-600">{error}</div>
+	if (!data) return <div className="p-6">No address found</div>
+
+	return (
+		<>
+			<ToastContainer />
+			<div className="min-h-screen bg-[#F9FAFB] p-6">
+				<div className="max-w-4xl mx-auto">
+					<div className="flex items-center justify-between mb-6">
+						<div className="flex items-center gap-4">
+							<Link to="/addresslist">
+								<button className="border border-gray-300 px-3 py-2 rounded hover:bg-gray-100">
+									<FaArrowLeft />
+								</button>
+							</Link>
+							<h2 className="text-xl font-semibold">Edit Address</h2>
+						</div>
+					</div>
+
+					{/* User Detail */}
+					<div className="space-y-2 bg-white p-6 rounded-md shadow-sm">
+						<h2 className="font-semibold text-gray-700">User Detail</h2>
+						<div className="grid grid-cols-2 gap-4">
+							<Autocomplete
+								options={users}
+								getOptionLabel={(option) => option?.name || option?.email || ''}
+								value={selectedUser}
+								onChange={(e, newValue) => setSelectedUser(newValue)}
+								renderInput={(params) => (
+									<TextField
+										{...params}
+										label="Consignee Name (Search user)"
+										required
+										fullWidth
+									/>
+								)}
+							/>
+
+							{/* Sender/Receiver checkbox */}
+							<div className="flex items-center h-full">
+								<div className="flex items-center h-full">
+									<Checkbox
+										label="Sender"
+										checked={formData.is_sender === true}
+										onChange={(e) =>
+											setFormData(prev => ({ ...prev, is_sender: true }))
+										}
+									/>
+									<Checkbox
+										label="Receiver"
+										checked={formData.is_sender === false}
+										onChange={(e) =>
+											setFormData(prev => ({ ...prev, is_sender: false }))
+										}
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Address Detail */}
+					<div className="space-y-2 bg-white p-6 mt-5 rounded-md shadow-sm">
+						<h2 className="font-semibold text-gray-700">Address Detail</h2>
+
+						<Input 
+							label="Contact Person Name" 
+							name="consignee_name" 
+							value={formData.consignee_name}
+							onChange={handleChange} 
+						/>
+
+						<div className="grid grid-cols-2 gap-4">
+							<Input 
+								label="Email" 
+								name="email" 
+								value={formData.email}
+								onChange={handleChange} 
+							/>
+							<Input 
+								label="Phone" 
+								name="phone" 
+								value={formData.phone}
+								onChange={handleChange} 
+							/>
+							<Input 
+								label="Address Line" 
+								name="address_line" 
+								value={formData.address_line}
+								onChange={handleChange} 
+							/>
+							<Input 
+								label="City" 
+								name="city" 
+								value={formData.city}
+								onChange={handleChange} 
+							/>
+							<Input 
+								label="State" 
+								name="state" 
+								value={formData.state}
+								onChange={handleChange} 
+							/>
+							<Input 
+								label="Pincode" 
+								name="pincode" 
+								value={formData.pincode}
+								onChange={handleChange} 
+							/>
+							<Input 
+								label="Country" 
+								name="country" 
+								value={formData.country}
+								onChange={handleChange} 
+							/>
+
+							<Select
+								label="Select Slot"
+								name="preferred_slot"
+								value={formData.preferred_slot}
+								onChange={(val) => setFormData(prev => ({ ...prev, preferred_slot: val }))}
+								required
+							>
+								<Option value="1">1:00pm - 4:00pm</Option>
+								<Option value="2">4:00pm - 7:00pm</Option>
+								<Option value="3">7:00pm - 10:00pm</Option>
+							</Select>
+						</div>
+					</div>
+
+					<div className="flex justify-end gap-4 mt-4">
+						<Button 
+							onClick={handleSubmit} 
+							disabled={isSubmitting}
+							className="px-5 py-2 rounded-md text-white bg-black hover:bg-gray-900"
+						>
+							{isSubmitting ? 'Updating...' : 'Update Address'}
+						</Button>
+					</div>
+				</div>
+			</div>
+
+			{showOverlay && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+					<div className="bg-white rounded-lg p-6 shadow-xl w-[90%] max-w-sm text-center">
+						{overlayStatus === 'loading' && (
+							<div className="flex flex-col items-center">
+								<div className="h-12 w-12 rounded-full border-4 border-gray-200 border-t-gray-700 animate-spin mb-3"></div>
+								<p className="text-gray-700 text-sm">Updating address...</p>
+							</div>
+						)}
+						{overlayStatus === 'success' && (
+							<div className="flex flex-col items-center">
+								<CheckCircleIcon className="w-14 h-14 text-green-500" />
+								<p className="text-gray-700 text-sm mt-2">Address updated successfully</p>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
+		</>
+	);
+};
+
+export default EditAddressForm;

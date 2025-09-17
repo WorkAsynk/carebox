@@ -7,17 +7,27 @@ import { buildApiUrl, API_ENDPOINTS } from '../config/api'
 
 const AddressList = () => {
 	const [address, setaddress] = useState([])
+	
 	useEffect(() => {
 		const fetchAddress = async () => {
 			try {
 				const res = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_ADDRESSES));
-				setaddress(res.data.addresses || []);
+				// Filter addresses where is_deleted is false
+				const activeAddresses = (res.data.addresses || []).filter(address => address?.is_deleted === false);
+				setaddress(activeAddresses);
 			} catch (error) {
-				console.error('Error fetching users:', error);
+				console.error('Error fetching addresses:', error);
 			}
 		};
 		fetchAddress();
 	}, [])
+
+	// Handle address deletion
+	const handleAddressDelete = (deletedAddressId) => {
+		setaddress(prevAddresses => 
+			prevAddresses.filter(addr => addr.id !== deletedAddressId)
+		);
+	};
 
 	console.log(address)
 
@@ -27,7 +37,7 @@ const AddressList = () => {
 			<div className='flex-1'>
 				<Topbar />
 				<div className="p-6">
-					<Address address={address} />
+					<Address address={address} onAddressDelete={handleAddressDelete} />
 				</div>
 			</div>
 		</div>

@@ -20,13 +20,12 @@ import InvoiceDownload from './pages/InvoiceDownload';
 import BillingInfo from './pages/BillingInfo';
 import FranchiseBillingInfo from './pages/FranchiseBillingInfo';
 import EditUser from './pages/EditUser';
+import EditAddress from './pages/EditAddress';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated);
   const user = useSelector((state) => state.auth?.user);
-
-  console.log(user)
 
   return (
     <div className="App">
@@ -63,6 +62,11 @@ function App() {
         <Route path="/addresslist" element={
           <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager']}>
             <AddressList />
+          </ProtectedRoute>
+        } />
+        <Route path="/edit-address/:id" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager']}>
+            <EditAddress />
           </ProtectedRoute>
         } />
         

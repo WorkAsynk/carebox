@@ -9,6 +9,8 @@ import {
   UserIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
+import axios from 'axios'
+import { buildApiUrl, API_ENDPOINTS } from '../config/api'
 
 // PDF generation libraries (install with: npm install html2canvas jspdf)
 // import html2canvas from 'html2canvas'
@@ -115,23 +117,24 @@ const CreateInvoice = () => {
   
   // Form state management
   const [invoiceNumber, setInvoiceNumber] = useState('')
+  // To Address (Franchise Details)
   const [franchiseName, setFranchiseName] = useState('')
   const [mfNumber, setMfNumber] = useState('')
   const [franchiseAddressLine1, setFranchiseAddressLine1] = useState('')
   const [franchiseAddressLine2, setFranchiseAddressLine2] = useState('')
   const [franchiseAddressLine3, setFranchiseAddressLine3] = useState('')
   const [franchisePincode, setFranchisePincode] = useState('')
+  const [gstNumber, setGstNumber] = useState('')
   const [totalParcel, setTotalParcel] = useState(0)
   const [billingAmount, setBillingAmount] = useState(0)
-  const [gstNumber, setGstNumber] = useState('')
-  const [clientName, setClientName] = useState('')
-  const [clientEmail, setClientEmail] = useState('')
-  const [clientAddressLine1, setClientAddressLine1] = useState('')
-  const [clientAddressLine2, setClientAddressLine2] = useState('')
-  const [clientAddressLine3, setClientAddressLine3] = useState('')
-  const [clientPincode, setClientPincode] = useState('')
   const [invoiceDate, setInvoiceDate] = useState('')
   const [dueDate, setDueDate] = useState('')
+  
+  // Franchise users autocomplete
+  const [franchiseUsers, setFranchiseUsers] = useState([])
+  const [selectedFranchise, setSelectedFranchise] = useState(null)
+  const [franchiseInput, setFranchiseInput] = useState('')
+  const [showFranchiseDropdown, setShowFranchiseDropdown] = useState(false)
   const [services, setServices] = useState([{
     description: '',
     quantity: 1,
@@ -143,7 +146,7 @@ const CreateInvoice = () => {
   const [terms, setTerms] = useState('')
   const [showInvoicePreview, setShowInvoicePreview] = useState(false)
 
-  // Auto-generate invoice number
+  // Auto-generate invoice number and fetch franchise users
   useEffect(() => {
     const generateInvoiceNumber = () => {
       const today = new Date()
@@ -161,6 +164,63 @@ const CreateInvoice = () => {
     const dueDate = new Date()
     dueDate.setDate(dueDate.getDate() + 30)
     setDueDate(dueDate.toISOString().split('T')[0])
+    
+    // Fetch franchise users
+    fetchFranchiseUsers()
+  }, [])
+
+  // Fetch users with Franchise role
+  const fetchFranchiseUsers = async () => {
+    try {
+      const { data } = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_USERS))
+      if (data && data.user) {
+        // Filter users with Franchise role and not deleted
+        const franchises = data.user.filter(user => 
+          user.role === 'Franchise' && user.is_deleted === false
+        )
+        setFranchiseUsers(franchises)
+      }
+    } catch (error) {
+      console.error('Error fetching franchise users:', error)
+    }
+  }
+
+  // Handle franchise selection
+  const handleFranchiseSelect = async (franchise) => {
+    setSelectedFranchise(franchise)
+    setFranchiseName(franchise.name || '')
+    setMfNumber(franchise.mf_no || '')
+    setGstNumber(franchise.gst_no || '')
+    setFranchiseInput(`${franchise.name} - ${franchise.co_name}`)
+    setShowFranchiseDropdown(false)
+    
+    // Fetch and populate address
+    if (franchise.address) {
+      setFranchiseAddressLine1(franchise.address.addressLine1 || '')
+      setFranchiseAddressLine2(franchise.address.addressLine2 || '')
+      setFranchiseAddressLine3(franchise.address.landmark || franchise.address.city || '')
+      setFranchisePincode(franchise.address.pincode || '')
+    }
+  }
+
+  // Filter franchise users based on input
+  const filteredFranchises = franchiseUsers.filter(franchise =>
+    franchise.name.toLowerCase().includes(franchiseInput.toLowerCase()) ||
+    franchise.co_name.toLowerCase().includes(franchiseInput.toLowerCase())
+  )
+
+  // Handle click outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.franchise-autocomplete')) {
+        setShowFranchiseDropdown(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
   }, [])
 
   // Add new service line
@@ -213,12 +273,6 @@ const CreateInvoice = () => {
       totalParcel,
       billingAmount,
       gstNumber,
-      clientName,
-      clientEmail,
-      clientAddressLine1,
-      clientAddressLine2,
-      clientAddressLine3,
-      clientPincode,
       invoiceDate,
       dueDate,
       services,
@@ -227,7 +281,13 @@ const CreateInvoice = () => {
       taxAmount,
       total,
       notes,
-      terms
+      terms,
+      fromAddress: {
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        address: user?.address || {}
+      }
     })
     setShowInvoicePreview(true)
   }
@@ -290,9 +350,9 @@ const CreateInvoice = () => {
 
   // Enhanced email functionality
   const handleEmail = () => {
-    const subject = `Invoice ${invoiceNumber} - ${franchiseName}`
+    const subject = `Invoice ${invoiceNumber} - ${user?.name || 'Carebox'}`
     const body = `
-Dear ${clientName},
+Dear ${franchiseName},
 
 Please find attached invoice ${invoiceNumber} for the services provided.
 
@@ -303,17 +363,18 @@ Invoice Details:
 - Total Amount: ₹${total.toFixed(2)}
 - Billing Amount: ₹${billingAmount.toFixed(2)}
 
-From: ${franchiseName}
+From: ${user?.name || 'Carebox'}
+To: ${franchiseName}
 MF Number: ${mfNumber}
 GST Number: ${gstNumber}
 
 Thank you for your business!
 
 Best regards,
-${franchiseName}
+${user?.name || 'Carebox'}
     `.trim()
     
-    const mailtoLink = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    const mailtoLink = `mailto:${selectedFranchise?.email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
     window.open(mailtoLink)
   }
 
@@ -374,6 +435,21 @@ ${franchiseName}
             <div>
               <h3 className="text-lg font-semibold text-black mb-3 border-b-2 border-red-500 pb-1">FROM</h3>
               <div className="space-y-2">
+                <div className="font-semibold text-black">{user?.name || 'Carebox'}</div>
+                <div className="text-gray-700">{user?.email || ''}</div>
+                <div className="text-gray-700">{user?.phone || ''}</div>
+                <div className="text-gray-700 space-y-1">
+                  {user?.address?.addressLine1 && <div>{user.address.addressLine1}</div>}
+                  {user?.address?.addressLine2 && <div>{user.address.addressLine2}</div>}
+                  {user?.address?.landmark && <div>{user.address.landmark}</div>}
+                  {user?.address?.city && <div>{user.address.city}</div>}
+                  {user?.address?.pincode && <div>Pincode: {user.address.pincode}</div>}
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-3 border-b-2 border-red-500 pb-1">TO</h3>
+              <div className="space-y-2">
                 <div className="font-semibold text-black">{franchiseName}</div>
                 <div className="text-gray-700">MF: {mfNumber}</div>
                 <div className="text-gray-700">GST: {gstNumber}</div>
@@ -382,19 +458,6 @@ ${franchiseName}
                   {franchiseAddressLine2 && <div>{franchiseAddressLine2}</div>}
                   {franchiseAddressLine3 && <div>{franchiseAddressLine3}</div>}
                   {franchisePincode && <div>Pincode: {franchisePincode}</div>}
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-black mb-3 border-b-2 border-red-500 pb-1">TO</h3>
-              <div className="space-y-2">
-                <div className="font-semibold text-black">{clientName}</div>
-                <div className="text-gray-700">{clientEmail}</div>
-                <div className="text-gray-700 space-y-1">
-                  {clientAddressLine1 && <div>{clientAddressLine1}</div>}
-                  {clientAddressLine2 && <div>{clientAddressLine2}</div>}
-                  {clientAddressLine3 && <div>{clientAddressLine3}</div>}
-                  {clientPincode && <div>Pincode: {clientPincode}</div>}
                 </div>
               </div>
             </div>
@@ -525,7 +588,7 @@ ${franchiseName}
       </div>
 
       {/* Instructions for users */}
-      <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 no-print">
+      {/* <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 no-print">
         <h4 className="font-semibold mb-2">📝 Instructions:</h4>
         <ul className="space-y-1">
           <li><strong>Print:</strong> Single-page invoice with "Carebox" watermark background</li>
@@ -540,7 +603,7 @@ ${franchiseName}
         <p className="mt-2 text-xs text-gray-500">
           Note: For PDF download to work, please install: <code>npm install html2canvas jspdf</code>
         </p>
-      </div>
+      </div> */}
     </div>
   )
 
@@ -567,9 +630,42 @@ ${franchiseName}
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Franchise Details */}
+            {/* Franchise Details (To Address) */}
             <div className='bg-white rounded-lg shadow-lg border-2 border-red-100 p-6 mb-6'>
-              <h2 className='text-lg font-semibold text-black mb-4 border-b-2 border-red-500 pb-2'>Franchise Details</h2>
+              <h2 className='text-lg font-semibold text-black mb-4 border-b-2 border-red-500 pb-2'>To Address - Franchise Details</h2>
+              
+              {/* Franchise Autocomplete */}
+              <div className='mb-6 relative franchise-autocomplete'>
+                <Input
+                  label="Select Franchise *"
+                  value={franchiseInput}
+                  onChange={(e) => {
+                    setFranchiseInput(e.target.value)
+                    setShowFranchiseDropdown(true)
+                  }}
+                  onFocus={() => setShowFranchiseDropdown(true)}
+                  icon={<UserIcon className="w-5 h-5" />}
+                  placeholder="Search franchise by name or company"
+                />
+                
+                {/* Dropdown */}
+                {showFranchiseDropdown && filteredFranchises.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {filteredFranchises.map((franchise) => (
+                      <div
+                        key={franchise.id}
+                        className="px-4 py-2 hover:bg-red-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        onClick={() => handleFranchiseSelect(franchise)}
+                      >
+                        <div className="font-medium text-gray-900">{franchise.name}</div>
+                        <div className="text-sm text-gray-500">{franchise.co_name}</div>
+                        <div className="text-xs text-gray-400">MF: {franchise.mf_no || 'N/A'}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
                 <div>
                   <Input 
@@ -577,7 +673,8 @@ ${franchiseName}
                     value={franchiseName}
                     onChange={(e) => setFranchiseName(e.target.value)}
                     icon={<UserIcon className="w-5 h-5" />}
-                    placeholder="Enter franchise name"
+                    placeholder="Auto-filled from selection"
+                    disabled
                   />
                 </div>
                 <div>
@@ -586,7 +683,8 @@ ${franchiseName}
                     value={mfNumber}
                     onChange={(e) => setMfNumber(e.target.value)}
                     icon={<DocumentPlusIcon className="w-5 h-5" />}
-                    placeholder="Enter MF number"
+                    placeholder="Auto-filled from selection"
+                    disabled
                   />
                 </div>
                 <div>
@@ -594,19 +692,21 @@ ${franchiseName}
                     label="GST Number *"
                     value={gstNumber}
                     onChange={(e) => setGstNumber(e.target.value)}
-                    placeholder="Enter GST number"
+                    placeholder="Auto-filled from selection"
+                    disabled
                   />
                 </div>
               </div>
               <div className='mt-6'>
-                <h3 className='text-md font-semibold text-black mb-3'>Franchise Address</h3>
+                <h3 className='text-md font-semibold text-black mb-3'>Franchise Address (Auto-populated)</h3>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
                   <div>
                     <Input 
                       label="Address Line 1 *"
                       value={franchiseAddressLine1}
                       onChange={(e) => setFranchiseAddressLine1(e.target.value)}
-                      placeholder="Street address, building name"
+                      placeholder="Auto-filled from selection"
+                      disabled
                     />
                   </div>
                   <div>
@@ -614,7 +714,8 @@ ${franchiseName}
                       label="Address Line 2"
                       value={franchiseAddressLine2}
                       onChange={(e) => setFranchiseAddressLine2(e.target.value)}
-                      placeholder="Area, locality"
+                      placeholder="Auto-filled from selection"
+                      disabled
                     />
                   </div>
                 </div>
@@ -624,7 +725,8 @@ ${franchiseName}
                       label="Address Line 3"
                       value={franchiseAddressLine3}
                       onChange={(e) => setFranchiseAddressLine3(e.target.value)}
-                      placeholder="City, state"
+                      placeholder="Auto-filled from selection"
+                      disabled
                     />
                   </div>
                   <div>
@@ -632,8 +734,8 @@ ${franchiseName}
                       label="Pincode *"
                       value={franchisePincode}
                       onChange={(e) => setFranchisePincode(e.target.value)}
-                      placeholder="000000"
-                      maxLength="6"
+                      placeholder="Auto-filled from selection"
+                      disabled
                     />
                   </div>
                 </div>
@@ -699,68 +801,6 @@ ${franchiseName}
               </div>
             </div>
 
-            {/* Client Information */}
-            <div className='bg-white rounded-lg shadow-lg border-2 border-red-100 p-6 mb-6'>
-              <h2 className='text-lg font-semibold text-black mb-4 border-b-2 border-red-500 pb-2'>Client Information</h2>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                <div>
-                  <Input 
-                    label="Client Name *"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    icon={<UserIcon className="w-5 h-5" />}
-                  />
-                </div>
-                <div>
-                  <Input 
-                    type="email"
-                    label="Client Email *"
-                    value={clientEmail}
-                    onChange={(e) => setClientEmail(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className='mt-6'>
-                <h3 className='text-md font-semibold text-black mb-3'>Client Address</h3>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-                  <div>
-                    <Input 
-                      label="Address Line 1 *"
-                      value={clientAddressLine1}
-                      onChange={(e) => setClientAddressLine1(e.target.value)}
-                      placeholder="Street address, building name"
-                    />
-                  </div>
-                  <div>
-                    <Input 
-                      label="Address Line 2"
-                      value={clientAddressLine2}
-                      onChange={(e) => setClientAddressLine2(e.target.value)}
-                      placeholder="Area, locality"
-                    />
-                  </div>
-                </div>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div>
-                    <Input 
-                      label="Address Line 3"
-                      value={clientAddressLine3}
-                      onChange={(e) => setClientAddressLine3(e.target.value)}
-                      placeholder="City, state"
-                    />
-                  </div>
-                  <div>
-                    <Input 
-                      label="Pincode *"
-                      value={clientPincode}
-                      onChange={(e) => setClientPincode(e.target.value)}
-                      placeholder="000000"
-                      maxLength="6"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Services */}
             <div className='bg-white rounded-lg shadow-lg border-2 border-red-100 p-6 mb-6'>

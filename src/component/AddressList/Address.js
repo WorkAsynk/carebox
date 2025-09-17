@@ -4,13 +4,18 @@ import { Link } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { Input } from '@material-tailwind/react';
 import { TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
+import axios from 'axios';
+import { buildApiUrl, API_ENDPOINTS } from '../../config/api';
 
-const Address = ({ address }) => {
+const Address = ({ address, onAddressDelete }) => {
 	const [searchTerm, setSearchTerm] = useState('');
 	const [tabs] = useState(['All', 'Sender', 'Receiver']);
 	const [activeTab, setActiveTab] = useState('All');
 	const [page, setPage] = useState(1);
 	const usersPerPage = 10;
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [addressToDelete, setAddressToDelete] = useState(null);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	const filteredUsers = address
 		?.filter(user => {
@@ -28,6 +33,43 @@ const Address = ({ address }) => {
 		(page - 1) * usersPerPage,
 		page * usersPerPage
 	);
+
+	// Handle delete confirmation
+	const handleDeleteClick = (addressItem) => {
+		setAddressToDelete(addressItem);
+		setShowDeleteModal(true);
+	};
+
+	// Delete address function
+	const handleDeleteAddress = async () => {
+		if (!addressToDelete) return;
+		
+		setIsDeleting(true);
+		try {
+			await axios.post(buildApiUrl(API_ENDPOINTS.DELETE_ADDRESS), {
+				address_id: addressToDelete.id
+			});
+			
+			// Call parent callback to update the address list
+			if (onAddressDelete) {
+				onAddressDelete(addressToDelete.id);
+			}
+			
+			setShowDeleteModal(false);
+			setAddressToDelete(null);
+		} catch (error) {
+			console.error('Error deleting address:', error);
+			alert('Failed to delete address. Please try again.');
+		} finally {
+			setIsDeleting(false);
+		}
+	};
+
+	// Cancel delete
+	const handleCancelDelete = () => {
+		setShowDeleteModal(false);
+		setAddressToDelete(null);
+	};
 
 	return (
 		<div className='max-w-6xl mx-auto'>
@@ -108,15 +150,18 @@ const Address = ({ address }) => {
 						<div className='text-gray-800 font-normal'>{user?.is_sender === false ? "Receiver" : "Sender"}</div>
 						<div className="text-gray-800">
 							<div className="flex items-center gap-2">
-								<button 
-									className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-									title="Edit Address"
-								>
-									<PencilIcon className="w-4 h-4" />
-								</button>
+								<Link to={`/edit-address/${user.id}`}>
+									<button 
+										className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+										title="Edit Address"
+									>
+										<PencilIcon className="w-4 h-4" />
+									</button>
+								</Link>
 								<button 
 									className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
 									title="Delete Address"
+									onClick={() => handleDeleteClick(user)}
 								>
 									<TrashIcon className="w-4 h-4" />
 								</button>
@@ -128,6 +173,44 @@ const Address = ({ address }) => {
 
 			{/* Pagination */}
 			<Pagination page={page} totalPages={totalPages} setPage={setPage} />
+
+			{/* Delete Confirmation Modal */}
+			{showDeleteModal && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">
+							Confirm Delete
+						</h3>
+						<p className="text-gray-600 mb-6">
+							Are you sure you want to delete the address for{' '}
+							<strong>{addressToDelete?.consignee_name}</strong>? This action cannot be undone.
+						</p>
+						<div className="flex justify-end gap-3">
+							<button
+								onClick={handleCancelDelete}
+								disabled={isDeleting}
+								className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleDeleteAddress}
+								disabled={isDeleting}
+								className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+							>
+								{isDeleting ? (
+									<>
+										<div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+										Deleting...
+									</>
+								) : (
+									'Delete'
+								)}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

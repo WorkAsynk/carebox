@@ -14,8 +14,9 @@ import { useSelector } from 'react-redux';
 const OrderForm = () => {
 
 	const { user } = useSelector((state) => state.auth);
+	const rateChart = user?.rate_chart
+	const zones = user?.zones
 
-	console.log(user)
 
 	const [sender, setSender] = useState({
 		id: '',
@@ -36,7 +37,7 @@ const OrderForm = () => {
 
 
 	//orde details
-	const [mfnumber, setmfnumber] = useState(user.mf_no)
+	const [mfnumber, setmfnumber] = useState(user?.mf_no || '')
 	const [mode, setMode] = useState('')
 	const [orderId, setOrderID] = useState('')
 	// AWB Number generation
@@ -46,14 +47,17 @@ const OrderForm = () => {
 	const [showSuccess, setShowSuccess] = useState(false);
 	const [createdAWB, setCreatedAWB] = useState('');
 
+	// Shipping Partner
+	const [shippingPartner, setShippingPartner] = useState('')
+
 	// Reciver address
 	const [receiver, setReceiver] = useState({
 		id: '',
-		name: '',
+		consignee_name: '',
 		phone: '',
 		email: '',
 		co_name: '',
-		address: '',
+		address_line: '',
 		pincode: '',
 		city: '',
 		state: '',
@@ -77,15 +81,36 @@ const OrderForm = () => {
 		dangerous: false,
 	});
 
-	const [volumetricWeight, setVolumetricWeight] = useState(0); // State for volumetric weight
+	const [calculatedVolumetricWeight, setCalculatedVolumetricWeight] = useState(0); // State for volumetric weight
 
+
+	const calculateVolumetricWeight = (length, width, height) => {
+		// Convert dimensions from cm to calculate volumetric weight
+		// Standard formula: (L × W × H) / 5000 for courier services
+		const l = parseFloat(length) || 0;
+		const w = parseFloat(width) || 0;
+		const h = parseFloat(height) || 0;
+
+		if (l <= 0 || w <= 0 || h <= 0) return 0;
+
+		// Calculate volumetric weight in grams (since actual weight is in grams)
+		return (l * w * h) / 5000 * 1000; // Convert to grams
+	};
 
 	const calculateChargeableWeight = (length, width, height, actualWeight) => {
-		// Calculate volumetric weight (in kg)
-		const volumetricWeight = (length * width * height) / 5000;
+		const volWeight = calculateVolumetricWeight(length, width, height);
+		const actWeight = parseFloat(actualWeight) || 0;
+
 		// Return the maximum of actual weight and volumetric weight
-		return Math.max(volumetricWeight, actualWeight);
+		return Math.max(volWeight, actWeight);
 	};
+
+	// Calculate volumetric weight automatically when dimensions change
+	const currentVolumetricWeight = calculateVolumetricWeight(
+		packageData.length,
+		packageData.width,
+		packageData.height
+	);
 
 	const chargeableWeight = calculateChargeableWeight(
 		packageData.length,
@@ -94,21 +119,35 @@ const OrderForm = () => {
 		packageData.actual_weight
 	);
 
-	const handleCalculate = () => {
-		const { volumetricWeight, chargeableWeight } = calculateChargeableWeight(
+	const handleCalculateVolumetric = () => {
+		const volWeight = calculateVolumetricWeight(
 			packageData.length,
 			packageData.width,
-			packageData.height,
-			packageData.actual_weight
+			packageData.height
 		);
-		setVolumetricWeight(volumetricWeight); // Set volumetric weight state
+		setPackageData(prev => ({
+			...prev,
+			volumetric_weight: volWeight.toFixed(2)
+		}));
+		setCalculatedVolumetricWeight(volWeight);
 	};
-	console.log("volumetricWeight Weight: ", volumetricWeight, "kg");
 
-	console.log("Chargeable Weight: ", chargeableWeight, "kg");
+	// Auto-calculate volumetric weight when dimensions change
+	useEffect(() => {
+		const volWeight = calculateVolumetricWeight(
+			packageData.length,
+			packageData.width,
+			packageData.height
+		);
+		setCalculatedVolumetricWeight(volWeight);
+		setPackageData(prev => ({
+			...prev,
+			volumetric_weight: volWeight.toFixed(2)
+		}));
+	}, [packageData.length, packageData.width, packageData.height]);
 
-	const [users, setUsers] = useState([]);
-	const [selectedUser, setSelectedUser] = useState('');
+
+	// Removed users, selectedUser - using Redux user data directly
 	const [addresses, setAddresses] = useState([]);
 	const [selectedPincode, setSelectedPincode] = useState('');
 	const [errorMessage, setErrorMessage] = useState('');
@@ -126,143 +165,96 @@ const OrderForm = () => {
 	// Helper: normalize pincode comparisons
 	const normalizePin = (pin) => String(pin ?? '').trim();
 
-	const [senderPinInput, setSenderPinInput] = useState('');
+	// Removed sender pincode functionality - only keeping receiver pincode
 
 	// Unique pins from a list
 	const uniquePins = (list = []) =>
 		[...new Set(list.map(a => normalizePin(a?.pincode)).filter(Boolean))];
 
-	// Derive pin lists (memoize if you like)
-	const senderPins = uniquePins(addresses?.filter(a => a?.is_sender === true));
+	// Derive pin lists for receiver only
 	const receiverPins = uniquePins(addresses?.filter(a => a?.is_sender === false));
 
-	// State for selected pins
-	const [selectedSenderPin, setSelectedSenderPin] = useState('');
+	// State for selected receiver pin only
 	const [selectedReceiverPin, setSelectedReceiverPin] = useState('');
 
 
 	const [receiverPinInput, setReceiverPinInput] = useState('');
-	const [userInput, setUserInput] = useState("");
+	// Removed userInput and userOptions - using Redux user data directly
 
-	// Convert to options array for autocomplete
-	const userOptions = users.map((user) => ({
-		label: `${user.name} - ${user.co_name}`,
-		value: user, // full object
-	}));
+	// Removed fetchUsers - using Redux user data directly
 
-	// Fetch all users for the select dropdown (Name and Co_name)
-	useEffect(() => {
-		const fetchUsers = async () => {
-			try {
-				const { data } = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_USERS));
-				if (data) {
-					setUsers(data.user);
-				}
-			} catch (error) {
-				console.error('Error fetching users:', error);
-			}
-		};
-		fetchUsers();
-	}, []);
-
-	// Fetch user data based on selected name and co_name
-	const fetchUserData = async (userObj) => {
-		if (!userObj) return;
-
-		try {
-			const { data } = await axios.post(
-				buildApiUrl(API_ENDPOINTS.ADDRESS_AUTOFILL),
-				{ name: userObj.name, co_name: userObj.co_name }
-			);
-
-			// If user found: autofill sender + set addresses
-			if (data?.userFound) {
-				setSender((prev) => ({
-					...prev,
-
-					name: selectedUser?.name || '',
-					phone: selectedUser?.phone || '',
-					email: selectedUser?.email || '',
-					gstNo: selectedUser?.gst_no || '',
-					co_name: selectedUser?.co_name || userObj.co_name || '',
-				}));
-
-				// Save addresses (avoid logging `addresses` right after setState)
-				setAddresses(Array.isArray(data?.addresses) ? data.addresses : []);
-				// If you want to inspect, log the payload directly:
-				// console.log('addresses from API:', data?.addresses || []);
-			} else {
-				// Reset when no user found
-				setSender({
-					name: '',
-					phone: '',
-					email: '',
-					gstNo: '',
-					address: '',
-					co_name: '',
-					pincode: '',
-					city: '',
-					state: '',
-					country: '',
-				});
-				setAddresses([]);
-			}
-		} catch (error) {
-			console.error('Error fetching user data:', error);
-		}
-	};
-
-	console.log(selectedUser)
+	// Removed fetchUserData - using Redux user data directly
 
 	// Fetch address fields based on selected pincode
 	// Fetch sender address by pincode
 	// Helper: normalize pincode comparisons
 
-	// Fetch sender address by pincode (is_sender === true)
-	const fetchSenderAddress = (pincode) => {
+	// Removed fetchSenderAddress - using Redux user data directly
+
+	const fetchReceiverAddress = async (pincode) => {
 		const targetPin = normalizePin(pincode);
-		const senderAddress = addresses?.find(
-			(address) => address?.is_sender === true && normalizePin(address?.pincode) === targetPin
-		);
 
-		if (typeof setSenderAddress === 'function') setSenderAddress(senderAddress || null);
+		try {
+			// Call API with MF number for address autofill
+			const { data } = await axios.post(
+				buildApiUrl(API_ENDPOINTS.ADDRESS_AUTOFILL),
+				{
+					name: user?.name,
+					co_name: user?.co_name,
+					mf_no: user?.mf_no,
+					pincode: targetPin
+				}
+			);
 
-		if (senderAddress) {
-			setSender(prev => ({
-				...prev,
-				id: senderAddress?.id || '',
-				address: senderAddress?.address_line || '',
-				city: senderAddress?.city || '',
-				state: senderAddress?.state || '',
-				country: senderAddress?.country || '',
-			}));
+			// Update addresses list
+			if (Array.isArray(data?.addresses)) {
+				setAddresses(data.addresses);
+			}
+
+			// Find receiver address from API response
+			const receiverAddress = data?.addresses?.find(
+				(address) => address?.is_sender === false && normalizePin(address?.pincode) === targetPin
+			);
+
+			if (typeof setReceiverAddress === 'function') setReceiverAddress(receiverAddress || null);
+
+			if (receiverAddress) {
+				setReceiver(prev => ({
+					...prev,
+					id: receiverAddress?.id,
+					consignee_name: receiverAddress?.consignee_name,
+					phone: receiverAddress?.phone,
+					email: receiverAddress?.email,
+					pincode: receiverAddress?.pincode,
+					address_line: receiverAddress?.address_line || '',
+					city: receiverAddress?.city || '',
+					state: receiverAddress?.state || '',
+					country: receiverAddress?.country || '',
+				}));
+			}
+			return receiverAddress || null;
+		} catch (error) {
+			// Fallback to local search if API fails
+			const receiverAddress = addresses?.find(
+				(address) => address?.is_sender === false && normalizePin(address?.pincode) === targetPin
+			);
+
+			if (receiverAddress) {
+				setReceiver(prev => ({
+					...prev,
+					id: receiverAddress?.id,
+					consignee_name: receiverAddress?.consignee_name,
+					phone: receiverAddress?.phone,
+					email: receiverAddress?.email,
+					pincode: receiverAddress?.pincode,
+					address_line: receiverAddress?.address_line || '',
+					city: receiverAddress?.city || '',
+					state: receiverAddress?.state || '',
+					country: receiverAddress?.country || '',
+				}));
+			}
+			return receiverAddress || null;
 		}
-		return senderAddress || null;
-	};
-
-	const fetchReceiverAddress = (pincode) => {
-		const targetPin = normalizePin(pincode);
-		const receiverAddress = addresses?.find(
-			(address) => address?.is_sender === false && normalizePin(address?.pincode) === targetPin
-		);
-
-		if (typeof setReceiverAddress === 'function') setReceiverAddress(receiverAddress || null);
-
-		if (receiverAddress) {
-			setReceiver(prev => ({
-				...prev,
-				id: receiverAddress?.id,
-				name: receiverAddress?.consignee_name,
-				phone: receiverAddress?.phone,
-				email: receiverAddress?.email,
-				pincode: receiverAddress?.pincode,
-				address: receiverAddress?.address_line || '',
-				city: receiverAddress?.city || '',
-				state: receiverAddress?.state || '',
-				country: receiverAddress?.country || '',
-			}));
-		}
-		return receiverAddress || null;
 	};
 
 
@@ -296,71 +288,150 @@ const OrderForm = () => {
 
 
 	const handleSubmit = async (e) => {
-		e.preventDefault();
+		if (e && typeof e.preventDefault === 'function') {
+			e.preventDefault();
+		}
 		setIsSubmitting(true);
-		if (!sender.id || !receiver.id || !packageData.length || !packageData.width || !packageData.height || !packageData.actual_weight || !packageData.contents_description || !selectedUser.id || (!awbGenerated && !awbNumber) || !orderId || !mfnumber || !mode || !invoiceNo || !invoiceValue || !sender.name || !sender.phone || !sender.email || !sender.gstNo || !sender.address || !sender.city || !sender.state || !sender.country || !receiver.name || !receiver.phone || !receiver.email || !receiver.co_name || !receiver.address || !receiver.city || !receiver.state || !receiver.country || !receiver.pincode) {
-			toast.error('Please fill all required fields');
+
+
+		// Relaxed validation per backend contract
+		const missing = [];
+		if (!orderId) missing.push('Order ID');
+		if (!invoiceNo) missing.push('Invoice No');
+		if (!shippingPartner) missing.push('Carrier');
+		if (!packageData.length) missing.push('Length');
+		if (!packageData.width) missing.push('Width');
+		if (!packageData.height) missing.push('Height');
+		if (!packageData.actual_weight) missing.push('Actual Weight');
+		if (!packageData.contents_description) missing.push('Contents Description');
+		// Receiver can be existing address id or raw fields to create one
+		const hasReceiverId = Boolean(receiver?.id);
+		const hasReceiverFields = Boolean(receiver?.consignee_name && receiver?.phone && receiver?.email && receiver?.address_line && receiver?.city && receiver?.state && receiver?.country && receiver?.pincode);
+		if (!hasReceiverId && !hasReceiverFields) missing.push('Receiver Details');
+		if (missing.length) {
+			toast.error(`Missing: ${missing.join(', ')}`);
 			setIsSubmitting(false);
 			return;
 		}
+
+		// Removed incorrect selectedReceiverPin validation that blocked API call
+
 		const date = new Date()
 		const generatedAWB = awbGenerated ? generateAWBNumber() : awbNumber;
 		setCreatedAWB(generatedAWB);
 
-		// Prepare order data to be sent to the API
-		const orderData = {
-			sender_address_id: sender.id, // Placeholder, replace with actual sender address ID
-			receiver_address_id: receiver.id, // Placeholder, replace with actual receiver address ID
-			inv_no: invoiceNo, // Placeholder, replace with actual invoice number
-			amount: invoiceValue, // Placeholder, replace with actual amount
-			ewaybill: ewaybillValue, // Placeholder, replace with actual e-waybill number
-			order_id: orderId, // Placeholder, replace with actual order ID
-			order_no: generatedAWB, // Placeholder, replace with actual order number
-			lr_no: generatedAWB, // Placeholder, replace with actual LR number
-			created_by: selectedUser.id, // Placeholder, replace with actual created by
-			agent_id: selectedUser.id, // Placeholder, replace with actual agent ID
-			insurance_type: 'owners risk', // Placeholder, replace with actual insurance type
-			forwarding_no: 'sdsa', // Placeholder, replace with actual forwarding number
-			carrier: 'sadas', // Placeholder, replace with actual carrier name
-			package_data: [{
-				length: parseFloat(packageData.length),
-				width: parseFloat(packageData.width),
-				height: parseFloat(packageData.height),
-				actual_weight: parseFloat(packageData.actual_weight),
-				volumetric_weight: parseFloat(volumetricWeight),
-				contents_description: packageData.contents_description,
-				fragile: packageData.fragile,
-				dangerous: packageData.dangerous,
-			}],
-		};
-
 		try {
-			const { data } = await axios.post(buildApiUrl(API_ENDPOINTS.CREATE_ORDER), orderData);
-			console.log('Order created successfully:', data);
+
+			// Step 1: Create receiver address first
+			const receiverAddressPayload = {
+				is_sender: false,
+				consignee_name: receiver.consignee_name,
+				phone: receiver.phone,
+				email: receiver.email,
+				address_line: receiver.address_line,
+				city: receiver.city,
+				state: receiver.state,
+				pincode: receiver.pincode,
+				country: receiver.country,
+				preferred_slot: '1',
+				user_id: user?.id || '1',
+			};
+
+			const addrRes = await axios.post(buildApiUrl(API_ENDPOINTS.CREATE_ADDRESS), receiverAddressPayload);
+			const receiverAddressId = addrRes?.data?.address?.id || addrRes?.data?.id || null;
+
+			// Step 2: Create order with the address ID
+
+			// Prepare numeric helpers with 2-decimal precision
+			const toNumber2 = (val) => {
+				const n = parseFloat(val);
+				if (Number.isNaN(n)) return 0;
+				return parseFloat(n.toFixed(2));
+			};
+
+			// Prepare order data to be sent to the API (only accepted fields)
+			const orderData = {
+				sender_address_id: user?.id || '1',
+				receiver_address_id: selectedReceiverPin ? selectedReceiverPin?.id : receiver || '',
+				inv_no: invoiceNo,
+				ewaybill: ewaybillValue,
+				order_id: orderId,
+				order_no: generatedAWB,
+				lr_no: generatedAWB,
+				created_by: user?.id || '1',
+				agent_id: user?.id || '1',
+				insurance_type: 'owners risk',
+				forwarding_no: 'sdsa',
+				carrier: shippingPartner,
+				package_data: [{
+					length: toNumber2(packageData.length),
+					width: toNumber2(packageData.width),
+					height: toNumber2(packageData.height),
+					actual_weight: toNumber2(packageData.actual_weight),
+					volumetric_weight: toNumber2(currentVolumetricWeight),
+					contents_description: packageData.contents_description,
+					fragile: Boolean(packageData.fragile),
+					dangerous: Boolean(packageData.dangerous),
+				}],
+				rate_chart: rateChart,
+				zones: zones,
+				state: receiver?.state,
+			};
+
+			const url = buildApiUrl(API_ENDPOINTS.CREATE_ORDER);
+			const { data } = await axios.post(url, orderData);
 			setShowSuccess(true);
 			setTimeout(() => {
 				setShowSuccess(false);
 				navigate('/orderlist');
 			}, 1500);
 		} catch (error) {
-			console.error('Error creating order:', error);
 			toast.error('Failed to create order');
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
 
-	// Trigger fetchUserData whenever selectedUser changes
+	// Populate sender data from Redux user data
 	useEffect(() => {
-		fetchSenderAddress()
-		fetchReceiverAddress()
-
-		if (selectedUser) {
-			fetchUserData(selectedUser);
+		if (user) {
+			setSender({
+				id: user.id || '',
+				name: user.name || '',
+				phone: user.phone || '',
+				email: user.email || '',
+				gstNo: user.gst_no || '',
+				co_name: user.co_name || '',
+				address: user.address?.addressLine1 || '',
+				pincode: user.address?.pincode || '',
+				city: user.address?.city || '',
+				state: user.address?.state || '',
+				country: user.address?.country || '',
+			});
 		}
-	}, [selectedUser]);
+		// Initialize addresses on component mount
+		const initializeAddresses = async () => {
+			try {
+				const { data } = await axios.post(
+					buildApiUrl(API_ENDPOINTS.ADDRESS_AUTOFILL),
+					{
+						name: user?.name,
+						co_name: user?.co_name,
+						mf_no: user?.mf_no
+					}
+				);
+				if (Array.isArray(data?.addresses)) {
+					setAddresses(data.addresses);
+				}
+			} catch (error) {
+			}
+		};
 
-	console.log(sender.id)
+		if (user) {
+			initializeAddresses();
+		}
+	}, [user]);
+
 
 	return (
 		<div className="min-h-screen bg-[#F9FAFB] p-6">
@@ -397,7 +468,7 @@ const OrderForm = () => {
 
 								</div>
 								<Input label="MF Number" disabled={true} value={mfnumber} onChange={(e) => setmfnumber(e.target.value)} placeholder="Enter MF Number" />
-								
+
 								<Select
 									value={mode}
 									onChange={(val) => setMode(val)}
@@ -406,14 +477,16 @@ const OrderForm = () => {
 									<Option value="Surface">Surface</Option>
 								</Select>
 								<Select
+									value={shippingPartner}
+									onChange={(val) => setShippingPartner(val)}
 									label="Forwarding Partner">
 									<Option value="Bluedart">Bluedart</Option>
 									<Option value="DTDC">DTDC</Option>
-									<Option value="Shree Maruti">Shree Maruti</Option>
+									<Option value="Shree Maruthi">Shree Maruthi</Option>
 									<Option value="Tirupati">Tirupati</Option>
 								</Select>
 								<Input label='Order ID' value={orderId} onChange={(e) => setOrderID(e.target.value)} placeholder='Enter Order ID' />
-								
+
 							</div>
 						</div>
 
@@ -424,50 +497,10 @@ const OrderForm = () => {
 								<div className="bg-white p-4 rounded-md shadow-sm">
 									<h2 className="font-semibold text-gray-700 mb-2">Sender Detail</h2>
 
-									{/* Select User by Name and Co_name */}
-									<div className="grid grid-cols-2 gap-2 mb-2">
-										<Autocomplete
-											options={userOptions}
-											getOptionLabel={(option) => option?.label || ""}
-											value={
-												selectedUser
-													? { label: `${selectedUser.name} - ${selectedUser.co_name}`, value: selectedUser }
-													: null
-											}
-											onChange={(_, newValue) => {
-												const userObj = newValue?.value || null;
-												setSelectedUser(userObj);
-												if (userObj) fetchUserData(userObj);   // <-- call with object
-											}}
-											inputValue={userInput}
-											onInputChange={(_, newInputValue) => setUserInput(newInputValue)}
-											renderInput={(params) => <TextField {...params} label="Select User" size="small" />}
-											fullWidth
-										/>
-										<Autocomplete
-											options={senderPins}                 // array of strings (e.g., ["400001", "400002", ...])
-											value={selectedSenderPin || null}    // controlled value
-											onChange={(_, newValue) => {
-												const pin = normalizePin(newValue || '');
-												setSelectedSenderPin(pin);
-												if (pin) fetchSenderAddress(pin);
-											}}
-											inputValue={senderPinInput}
-											onInputChange={(_, newInputValue, reason) => {
-												setSenderPinInput(newInputValue);
-												// Optional: auto-fetch when user types a full 6-digit pin
-												const pin = normalizePin(newInputValue);
-												if (reason !== 'reset' && /^\d{6}$/.test(pin)) {
-													setSelectedSenderPin(pin);
-													fetchSenderAddress(pin);
-												}
-											}}
-											freeSolo
-											renderInput={(params) => (
-												<TextField {...params} label="Select Sender Pincode" size="small" />
-											)}
-											fullWidth
-										/>
+									{/* Removed user selection and sender pincode - using Redux user data directly */}
+									<div className="grid grid-cols-1 gap-2 mb-2">
+										{/* Removed user selection - using Redux user data */}
+										{/* Removed sender pincode selection - using Redux user data */}
 
 									</div>
 
@@ -479,12 +512,14 @@ const OrderForm = () => {
 											label="Name"
 											placeholder="Enter Name"
 											value={sender.name}
+											disabled={true}
 											onChange={(e) => setSender({ ...sender, name: e.target.value })}
 										/>
 										<Input
 											label="Mobile"
 											placeholder="Enter Your Mobile Number"
 											value={sender.phone}
+											disabled={true}
 											onChange={(e) => setSender({ ...sender, phone: e.target.value })}
 										/>
 									</div>
@@ -494,12 +529,14 @@ const OrderForm = () => {
 											label="Email"
 											placeholder="Enter Email"
 											value={sender.email}
+											disabled={true}
 											onChange={(e) => setSender({ ...sender, email: e.target.value })}
 										/>
 										<Input
 											label="GST"
 											placeholder="Enter Your GST"
 											value={sender.gstNo || ''}
+											disabled={true}
 											onChange={(e) => setSender({ ...sender, gstNo: e.target.value })}
 										/>
 									</div>
@@ -510,12 +547,14 @@ const OrderForm = () => {
 											label="Address"
 											placeholder="Address"
 											value={sender.address}
+											disabled={true}
 											onChange={(e) => setSender({ ...sender, address: e.target.value })}
 										/>
 										<Input
 											label="City"
 											placeholder="City"
 											value={sender.city}
+											disabled={true}
 											onChange={(e) => setSender({ ...sender, city: e.target.value })}
 										/>
 									</div>
@@ -525,12 +564,15 @@ const OrderForm = () => {
 											label="State"
 											placeholder="State"
 											value={sender.state}
+											disabled={true}
+
 											onChange={(e) => setSender({ ...sender, state: e.target.value })}
 										/>
 										<Input
 											label="Country"
 											placeholder="Country"
-											value={sender.country}
+											value={"India"}
+											disabled={true}
 											onChange={(e) => setSender({ ...sender, country: e.target.value })}
 										/>
 									</div>
@@ -560,19 +602,20 @@ const OrderForm = () => {
 											}}
 											freeSolo
 											renderInput={(params) => (
-												<TextField {...params} label="Select Receiver Pincode" size="small" />
+												<TextField {...params} label="Select Receiver Pincode (Optional)" size="small" />
 											)}
 											fullWidth
 										/>
 									</div>
+									<p className="text-xs text-gray-500 mb-2">Select a pincode to auto-fill receiver details, or manually enter all receiver information below.</p>
 									{/* Auto-filled Sender Details */}
 									<div className="grid grid-cols-3 gap-2 mb-2">
 
 										<Input
 											label="Name"
 											placeholder="Enter Name"
-											value={receiver.name}
-											onChange={(e) => setReceiver({ ...receiver, name: e.target.value })}
+											value={receiver.consignee_name}
+											onChange={(e) => setReceiver({ ...receiver, consignee_name: e.target.value })}
 										/>
 										<Input
 											label="Mobile"
@@ -597,8 +640,8 @@ const OrderForm = () => {
 										<Input
 											label="Address"
 											placeholder="Enter Your Address"
-											value={receiver.address}
-											onChange={(e) => setReceiver({ ...receiver, address: e.target.value })}
+											value={receiver.address_line}
+											onChange={(e) => setReceiver({ ...receiver, address_line: e.target.value })}
 										/>
 										<Input
 											label="City"
@@ -678,13 +721,22 @@ const OrderForm = () => {
 										</span>
 									</div>
 
+									{/* Volumetric Weight Info */}
+
+
+
+
+
 									{/* Total Chargeable Weight */}
 									<div className="bg-gray-50 border border-gray-100 rounded-md p-4">
 										<div className="flex items-center justify-between">
 											<span className="font-medium text-sm text-gray-800">Chargeable Weight </span>
 											<InformationCircleIcon className="w-4 h-4 text-gray-400 ml-2" />
 										</div>
-										<p className="text-gray-500 text-sm mt-1">{chargeableWeight} gm</p>
+										<p className="text-gray-500 text-sm mt-1">
+											{chargeableWeight.toFixed(2)} gm
+
+										</p>
 									</div>
 								</div>
 							</div>
@@ -720,12 +772,15 @@ const OrderForm = () => {
 					<div className="flex gap-3">
 						{/* <button className="px-5 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Create Order and Manifest Later</button> */}
 						<button
+							type="button"
 							onClick={handleSubmit}
 							className={`px-5 py-2 rounded-md text-white ${isSubmitting ? 'bg-gray-600 cursor-not-allowed' : 'bg-black hover:bg-gray-900'}`}
 							disabled={isSubmitting}
 						>
 							{isSubmitting ? 'Processing...' : 'Create Order and Get AWB'}
 						</button>
+
+						{/* Debug button removed */}
 					</div>
 				</div>
 

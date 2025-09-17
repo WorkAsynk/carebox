@@ -7,7 +7,7 @@ import { TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 const UsersList = ({ users, handleDeleteUser }) => {
 	const [searchTerm, setSearchTerm] = useState('');
-	const [tabs] = useState(['All', 'Admin', 'Operation Manager', 'Developer', 'Client']);
+	const [tabs] = useState(['All', 'Admin', 'Operation Manager', 'Developer', 'Client', 'Franchise']);
 	const [activeTab, setActiveTab] = useState('All');
 	const [page, setPage] = useState(1);
 	const usersPerPage = 10;

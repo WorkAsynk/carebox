@@ -8,6 +8,7 @@ import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import axios from 'axios'
 import { buildApiUrl, API_ENDPOINTS } from '../../config/api'
 import { useSelector } from 'react-redux'
+import { toast } from 'react-toastify'
 
 const EditOrderForm = ({ data, loading, error }) => {
     const navigate = useNavigate();
@@ -21,30 +22,25 @@ const EditOrderForm = ({ data, loading, error }) => {
 
     // Prefill from data
     const [sender, setSender] = useState({ id: '', name: '', phone: '', email: '', gstNo: '', address: '', co_name: '', pincode: '', city: '', state: '', country: '' });
-    const [receiver, setReceiver] = useState({ id: '', name: '', phone: '', email: '', co_name: '', address: '', pincode: '', city: '', state: '', country: '' });
+    const [receiver, setReceiver] = useState({ id: '', consignee_name: '', phone: '', email: '', co_name: '', address_line: '', pincode: '', city: '', state: '', country: '' });
     const [orderId, setOrderID] = useState('');
-    const [mfnumber, setmfnumber] = useState(user.mf_no);
+    const [mfnumber, setmfnumber] = useState(user?.mf_no || '');
     const [mode, setMode] = useState('');
     const [awbNumber, setAwbNumber] = useState('');
     const [awbGenerated, setAwbGenerated] = useState(false);
-    const [packageData, setPackageData] = useState({ length: '', width: '', height: '', actual_weight: '', contents_description: '', fragile: false, dangerous: false });
+    const [shippingPartner, setShippingPartner] = useState('');
+    const [packageData, setPackageData] = useState({ length: '', width: '', height: '', actual_weight: '', volumetric_weight: '', contents_description: '', fragile: false, dangerous: false });
     const [invoiceNo, setInvoiceNo] = useState('');
     const [invoiceValue, setInvoiceValue] = useState('');
     const [ewaybillno, setEwaybillno] = useState('');
     const [ewaybillValue, setewaybillValue] = useState('');
 
-    // Autocomplete + address lists (same behavior as OrderForm)
-    const [users, setUsers] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(null);
+    // Address lists (same behavior as OrderForm)
     const [addresses, setAddresses] = useState([]);
-    const [senderPinInput, setSenderPinInput] = useState('');
     const [receiverPinInput, setReceiverPinInput] = useState('');
-    const [userInput, setUserInput] = useState('');
     const normalizePin = (pin) => String(pin ?? '').trim();
     const uniquePins = (list = []) => [...new Set(list.map(a => normalizePin(a?.pincode)).filter(Boolean))];
-    const senderPins = uniquePins(addresses?.filter(a => a?.is_sender === true));
     const receiverPins = uniquePins(addresses?.filter(a => a?.is_sender === false));
-    const [selectedSenderPin, setSelectedSenderPin] = useState('');
     const [selectedReceiverPin, setSelectedReceiverPin] = useState('');
 
     useEffect(() => {
@@ -73,11 +69,11 @@ const EditOrderForm = ({ data, loading, error }) => {
         });
         setReceiver({
             id: r?.id || '',
-            name: r?.consignee_name || r?.name || '',
+            consignee_name: r?.consignee_name || r?.name || '',
             phone: r?.phone || '',
             email: r?.email || '',
             co_name: r?.co_name || '',
-            address: r?.address_line || r?.address || '',
+            address_line: r?.address_line || r?.address || '',
             pincode: r?.pincode || '',
             city: r?.city || '',
             state: r?.state || '',
@@ -101,134 +97,244 @@ const EditOrderForm = ({ data, loading, error }) => {
         setewaybillValue(data?.invoice?.ewaybill_value || '');
     }, [data]);
 
-    // Fetch users for autocomplete
+    // Initialize addresses on component mount (using Redux user)
     useEffect(() => {
-        const fetchUsers = async () => {
+        const initializeAddresses = async () => {
             try {
-                const { data } = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_USERS));
-                if (data) setUsers(data.user);
+                const { data } = await axios.post(
+                    buildApiUrl(API_ENDPOINTS.ADDRESS_AUTOFILL),
+                    {
+                        name: user?.name,
+                        co_name: user?.co_name,
+                        mf_no: user?.mf_no,
+                    }
+                );
+                if (Array.isArray(data?.addresses)) {
+                    setAddresses(data.addresses);
+                }
             } catch (e) {
-                console.error('Error fetching users:', e);
+                // silently ignore
             }
         };
-        fetchUsers();
-    }, []);
+        if (user) initializeAddresses();
+    }, [user]);
 
-    const userOptions = users.map((u) => ({ label: `${u.name} - ${u.co_name}`, value: u }));
-
-    const fetchUserData = async (userObj) => {
-        if (!userObj) return;
+    const fetchReceiverAddress = async (pincode) => {
+        const targetPin = normalizePin(pincode);
         try {
             const { data } = await axios.post(
                 buildApiUrl(API_ENDPOINTS.ADDRESS_AUTOFILL),
-                { name: userObj.name, co_name: userObj.co_name }
+                {
+                    name: user?.name,
+                    co_name: user?.co_name,
+                    mf_no: user?.mf_no,
+                    pincode: targetPin
+                }
             );
             if (Array.isArray(data?.addresses)) {
                 setAddresses(data.addresses);
             }
+            const receiverAddress = data?.addresses?.find(
+                (address) => address?.is_sender === false && normalizePin(address?.pincode) === targetPin
+            );
+            if (receiverAddress) {
+                setReceiver(prev => ({
+                    ...prev,
+                    id: receiverAddress?.id,
+                    consignee_name: receiverAddress?.consignee_name,
+                    phone: receiverAddress?.phone,
+                    email: receiverAddress?.email,
+                    pincode: receiverAddress?.pincode,
+                    address_line: receiverAddress?.address_line || '',
+                    city: receiverAddress?.city || '',
+                    state: receiverAddress?.state || '',
+                    country: receiverAddress?.country || '',
+                }));
+            }
+            return receiverAddress || null;
         } catch (e) {
-            console.error('Error fetching user data:', e);
+            const receiverAddress = addresses?.find(
+                (address) => address?.is_sender === false && normalizePin(address?.pincode) === targetPin
+            );
+            if (receiverAddress) {
+                setReceiver(prev => ({
+                    ...prev,
+                    id: receiverAddress?.id,
+                    consignee_name: receiverAddress?.consignee_name,
+                    phone: receiverAddress?.phone,
+                    email: receiverAddress?.email,
+                    pincode: receiverAddress?.pincode,
+                    address_line: receiverAddress?.address_line || '',
+                    city: receiverAddress?.city || '',
+                    state: receiverAddress?.state || '',
+                    country: receiverAddress?.country || '',
+                }));
+            }
+            return receiverAddress || null;
         }
     };
 
-    const fetchSenderAddress = (pincode) => {
-        const targetPin = normalizePin(pincode);
-        const senderAddress = addresses?.find(
-            (address) => address?.is_sender === true && normalizePin(address?.pincode) === targetPin
+    const calculateVolumetricWeight = (length, width, height) => {
+        const l = parseFloat(length) || 0;
+        const w = parseFloat(width) || 0;
+        const h = parseFloat(height) || 0;
+        
+        if (l <= 0 || w <= 0 || h <= 0) return 0;
+        
+        return (l * w * h) / 5000 * 1000; // Convert to grams
+    };
+
+    const currentVolumetricWeight = calculateVolumetricWeight(
+        packageData.length,
+        packageData.width,
+        packageData.height
+    );
+
+    const chargeableWeight = Math.max(
+        parseFloat(packageData.actual_weight) || 0,
+        currentVolumetricWeight
+    );
+
+    // Auto-update volumetric weight (to string with 2 decimals) when dimensions change
+    useEffect(() => {
+        const volWeight = calculateVolumetricWeight(
+            packageData.length,
+            packageData.width,
+            packageData.height
         );
-        if (senderAddress) {
-            setSender(prev => ({
-                ...prev,
-                id: senderAddress?.id || '',
-                address: senderAddress?.address_line || '',
-                city: senderAddress?.city || '',
-                state: senderAddress?.state || '',
-                country: senderAddress?.country || '',
-            }));
-        }
-        return senderAddress || null;
-    };
-
-    const fetchReceiverAddress = (pincode) => {
-        const targetPin = normalizePin(pincode);
-        const receiverAddress = addresses?.find(
-            (address) => address?.is_sender === false && normalizePin(address?.pincode) === targetPin
-        );
-        if (receiverAddress) {
-            setReceiver(prev => ({
-                ...prev,
-                id: receiverAddress?.id,
-                name: receiverAddress?.consignee_name,
-                phone: receiverAddress?.phone,
-                email: receiverAddress?.email,
-                pincode: receiverAddress?.pincode,
-                address: receiverAddress?.address_line || '',
-                city: receiverAddress?.city || '',
-                state: receiverAddress?.state || '',
-                country: receiverAddress?.country || '',
-            }));
-        }
-        return receiverAddress || null;
-    };
-
-    const volumetricWeight = useMemo(() => {
-        const l = Number(packageData.length) || 0;
-        const w = Number(packageData.width) || 0;
-        const h = Number(packageData.height) || 0;
-        return (l * w * h) / 5000;
+        setPackageData(prev => ({
+            ...prev,
+            volumetric_weight: Number.isFinite(volWeight) ? volWeight.toFixed(2) : '0.00',
+        }));
     }, [packageData.length, packageData.width, packageData.height]);
 
-    const chargeableWeight = useMemo(() => {
-        const actual = Number(packageData.actual_weight) || 0;
-        return Math.max(actual, volumetricWeight);
-    }, [packageData.actual_weight, volumetricWeight]);
+    // AWB generator (same as OrderForm)
+    const generateAWBNumber = () => {
+        const today = new Date();
+        const day = today.getDate().toString().padStart(2, '0');
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const year = today.getFullYear().toString();
+        const currentDate = `${day}${month}${year}`;
+        try {
+            const stored = JSON.parse(localStorage.getItem('awbCounter') || '{}');
+            let counter = 0;
+            if (stored?.date === currentDate && Number.isInteger(stored?.counter)) {
+                counter = stored.counter + 1;
+            } else {
+                counter = 1;
+            }
+            localStorage.setItem('awbCounter', JSON.stringify({ date: currentDate, counter }));
+            const orderNumber = counter.toString().padStart(4, '0');
+            return `${currentDate}${orderNumber}`;
+        } catch (e) {
+            const orderNumber = '0001';
+            return `${currentDate}${orderNumber}`;
+        }
+    };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+        }
         setIsSubmitting(true);
         setErrorMessage('');
-        try {
-          const payload = {
-            order_pk_id: data?.id || data?.order_pk_id || orderId,
-            agent_id: user?.id || data?.agent_id || '',
-            created_by: user?.id || '',
-            // keep the request shape consistent with create
-            sender_address_id: sender.id,
-            receiver_address_id: receiver.id,
-            inv_no: invoiceNo,
-            amount: invoiceValue,
-            ewaybill: ewaybillno,            // from the correct field
-            ewaybill_value: ewaybillValue,   // optional, if your API supports it
-            order_id: orderId,
-            order_no: awbNumber,
-            lr_no: awbNumber,
-            mode,                            // add mode
-            mf_no: mfnumber,                 // add MF
-            package_data: [{
-              length: Number(packageData.length),
-              width: Number(packageData.width),
-              height: Number(packageData.height),
-              actual_weight: Number(packageData.actual_weight),
-              volumetric_weight: Number(volumetricWeight),
-              contents_description: packageData.contents_description,
-              fragile: Boolean(packageData.fragile),
-              dangerous: Boolean(packageData.dangerous),
-            }],
-          };
-      
-          await axios.post(buildApiUrl(API_ENDPOINTS.EDIT_ORDER), payload);
-          setShowSuccess(true);
-          setTimeout(() => {
-            setShowSuccess(false);
-            navigate('/orderlist');
-          }, 1200);
-        } catch (err) {
-          console.error('Failed to update order', err);
-          setErrorMessage('Failed to update order');
-        } finally {
-          setIsSubmitting(false);
+        
+        // Relaxed validation per backend contract
+        const missing = [];
+        if (!orderId) missing.push('Order ID');
+        if (!invoiceNo) missing.push('Invoice No');
+        if (!shippingPartner) missing.push('Carrier');
+        if (!packageData.length) missing.push('Length');
+        if (!packageData.width) missing.push('Width');
+        if (!packageData.height) missing.push('Height');
+        if (!packageData.actual_weight) missing.push('Actual Weight');
+        if (!packageData.contents_description) missing.push('Contents Description');
+        // Receiver can be existing address id or raw fields to create one
+        const hasReceiverId = Boolean(receiver?.id);
+        const hasReceiverFields = Boolean(receiver?.consignee_name && receiver?.phone && receiver?.email && receiver?.address_line && receiver?.city && receiver?.state && receiver?.country && receiver?.pincode);
+        if (!hasReceiverId && !hasReceiverFields) missing.push('Receiver Details');
+        if (missing.length) {
+            toast.error(`Missing: ${missing.join(', ')}`);
+            setIsSubmitting(false);
+            return;
         }
-      };
+
+        try {
+            // Optionally generate AWB if toggled on
+            const generatedAWB = awbGenerated ? generateAWBNumber() : awbNumber;
+            if (awbGenerated) {
+                setCreatedAWB(generatedAWB);
+            }
+
+            // Ensure we have a receiver address ID: create one if needed
+            let receiverAddressId = receiver?.id || null;
+            if (!receiverAddressId) {
+                const receiverAddressPayload = {
+                    is_sender: false,
+                    consignee_name: receiver.consignee_name,
+                    phone: receiver.phone,
+                    email: receiver.email,
+                    address_line: receiver.address_line,
+                    city: receiver.city,
+                    state: receiver.state,
+                    pincode: receiver.pincode,
+                    country: receiver.country,
+                    preferred_slot: '1',
+                    user_id: user?.id || '1',
+                };
+                const addrRes = await axios.post(buildApiUrl(API_ENDPOINTS.CREATE_ADDRESS), receiverAddressPayload);
+                receiverAddressId = addrRes?.data?.address?.id || addrRes?.data?.id || null;
+            }
+            // Prepare numeric helpers with 2-decimal precision
+            const toNumber2 = (val) => {
+                const n = parseFloat(val);
+                if (Number.isNaN(n)) return 0;
+                return parseFloat(n.toFixed(2));
+            };
+
+            // Prepare order data to be sent to the API (only accepted fields)
+            const orderData = {
+                order_pk_id: data?.id || data?.order_pk_id || orderId,
+                sender_address_id: user?.id || '1',
+                receiver_address_id: receiverAddressId || '',
+                inv_no: invoiceNo,
+                ewaybill: ewaybillValue,
+                order_id: orderId,
+                order_no: generatedAWB,
+                lr_no: generatedAWB,
+                created_by: user?.id || '1',
+                agent_id: user?.id || '1',
+                insurance_type: 'owners risk',
+                forwarding_no: 'sdsa',
+                carrier: shippingPartner,
+                package_data: [{
+                    length: toNumber2(packageData.length),
+                    width: toNumber2(packageData.width),
+                    height: toNumber2(packageData.height),
+                    actual_weight: toNumber2(packageData.actual_weight),
+                    volumetric_weight: toNumber2(currentVolumetricWeight),
+                    contents_description: packageData.contents_description,
+                    fragile: Boolean(packageData.fragile),
+                    dangerous: Boolean(packageData.dangerous),
+                }],
+                rate_chart: user?.rate_chart,
+                zones: user?.zones,
+                state: receiver?.state,
+            };
+
+            const url = buildApiUrl(API_ENDPOINTS.EDIT_ORDER);
+            const { data: responseData } = await axios.post(url, orderData);
+            setShowSuccess(true);
+            setTimeout(() => {
+                setShowSuccess(false);
+                navigate('/orderlist');
+            }, 1500);
+        } catch (error) {
+            toast.error('Failed to update order');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     if (loading) return <div className="p-6">Loading...</div>
     if (error) return <div className="p-6 text-red-600">{error}</div>
@@ -256,9 +362,9 @@ const EditOrderForm = ({ data, loading, error }) => {
 						{/* Order Detail Section */}
 						<div className="bg-white p-4 rounded-md shadow-sm">
 							<h2 className="font-semibold text-gray-700 mb-2">Order Detail</h2>
-							<div className="grid grid-cols-2 gap-4">
+							<div className="grid grid-cols-3 gap-4">
 								<div className='cols-span-1'>
-									<Input label="AWB Number" value={awbNumber} disabled={awbGenerated} onChange={(e) => setAwbNumber(e.target.value)} placeholder="Enter AWB Number" />
+									<Input label="AWB Number" disabled={true} value={awbNumber}  onChange={(e) => setAwbNumber(e.target.value)} placeholder="Enter AWB Number" />
 									{/* <div className='flex justify-start items-center'>
 										<Checkbox
 											checked={awbGenerated}
@@ -276,6 +382,15 @@ const EditOrderForm = ({ data, loading, error }) => {
 									<Option value="Air">Air</Option>
 									<Option value="Surface">Surface</Option>
 								</Select>
+								<Select
+									value={shippingPartner}
+									onChange={(val) => setShippingPartner(val)}
+									label="Forwarding Partner">
+									<Option value="Bluedart">Bluedart</Option>
+									<Option value="DTDC">DTDC</Option>
+									<Option value="Shree Maruthi">Shree Maruthi</Option>
+									<Option value="Tirupati">Tirupati</Option>
+								</Select>
 								<Input label='Order ID' value={orderId} onChange={(e) => setOrderID(e.target.value)} placeholder='Enter Order ID' />
 							</div>
 						</div>
@@ -287,50 +402,11 @@ const EditOrderForm = ({ data, loading, error }) => {
 								<div className="bg-white p-4 rounded-md shadow-sm">
 									<h2 className="font-semibold text-gray-700 mb-2">Sender Detail</h2>
 
-									{/* Select User by Name and Co_name */}
-									<div className="grid grid-cols-2 gap-2 mb-2">
-										<Autocomplete
-											options={userOptions}
-											getOptionLabel={(option) => option?.label || ""}
-											value={
-												selectedUser
-													? { label: `${selectedUser.name} - ${selectedUser.co_name}`, value: selectedUser }
-													: null
-											}
-											onChange={(_, newValue) => {
-												const userObj = newValue?.value || null;
-												setSelectedUser(userObj);
-												if (userObj) fetchUserData(userObj);   // <-- call with object
-											}}
-											inputValue={userInput}
-											onInputChange={(_, newInputValue) => setUserInput(newInputValue)}
-											renderInput={(params) => <TextField {...params} label="Select User" size="small" />}
-											fullWidth
-										/>
-										<Autocomplete
-											options={senderPins}                 // array of strings (e.g., ["400001", "400002", ...])
-											value={selectedSenderPin || null}    // controlled value
-											onChange={(_, newValue) => {
-												const pin = normalizePin(newValue || '');
-												setSelectedSenderPin(pin);
-												if (pin) fetchSenderAddress(pin);
-											}}
-											inputValue={senderPinInput}
-											onInputChange={(_, newInputValue, reason) => {
-												setSenderPinInput(newInputValue);
-												// Optional: auto-fetch when user types a full 6-digit pin
-												const pin = normalizePin(newInputValue);
-												if (reason !== 'reset' && /^\d{6}$/.test(pin)) {
-													setSelectedSenderPin(pin);
-													fetchSenderAddress(pin);
-												}
-											}}
-											freeSolo
-											renderInput={(params) => (
-												<TextField {...params} label="Select Sender Pincode" size="small" />
-											)}
-											fullWidth
-										/>
+
+									{/* Removed user selection and sender pincode - using Redux user data directly */}
+									<div className="grid grid-cols-1 gap-2 mb-2">
+										{/* Removed user selection - using Redux user data */}
+										{/* Removed sender pincode selection - using Redux user data */}
 
 									</div>
 
@@ -338,64 +414,72 @@ const EditOrderForm = ({ data, loading, error }) => {
 
 									{/* Auto-filled Sender Details */}
 									<div className="grid grid-cols-2 gap-2 mb-2">
-										<Input
-											label="Name"
-											placeholder="Enter Name"
-											value={sender.name}
-											onChange={(e) => setSender({ ...sender, name: e.target.value })}
-										/>
-										<Input
-											label="Mobile"
-											placeholder="Enter Your Mobile Number"
-											value={sender.phone}
-											onChange={(e) => setSender({ ...sender, phone: e.target.value })}
-										/>
+                            <Input
+                                label="Name"
+                                placeholder="Enter Name"
+                                value={sender.name}
+                                disabled={true}
+                                onChange={(e) => setSender({ ...sender, name: e.target.value })}
+                            />
+                            <Input
+                                label="Mobile"
+                                placeholder="Enter Your Mobile Number"
+                                value={sender.phone}
+                                disabled={true}
+                                onChange={(e) => setSender({ ...sender, phone: e.target.value })}
+                            />
 									</div>
 
 									<div className="grid grid-cols-2 gap-2 mt-2">
-										<Input
-											label="Email"
-											placeholder="Enter Email"
-											value={sender.email}
-											onChange={(e) => setSender({ ...sender, email: e.target.value })}
-										/>
-										<Input
-											label="GST"
-											placeholder="Enter Your GST"
-											value={sender.gstNo || ''}
-											onChange={(e) => setSender({ ...sender, gstNo: e.target.value })}
-										/>
+                            <Input
+                                label="Email"
+                                placeholder="Enter Email"
+                                value={sender.email}
+                                disabled={true}
+                                onChange={(e) => setSender({ ...sender, email: e.target.value })}
+                            />
+                            <Input
+                                label="GST"
+                                placeholder="Enter Your GST"
+                                value={sender.gstNo || ''}
+                                disabled={true}
+                                onChange={(e) => setSender({ ...sender, gstNo: e.target.value })}
+                            />
 									</div>
 
 									<h2 className="font-semibold text-gray-700 mb-2 mt-2">Address</h2>
 									<div className="grid grid-cols-2 gap-2 mb-2 mt-4">
-										<Input
-											label="Address"
-											placeholder="Address"
-											value={sender.address}
-											onChange={(e) => setSender({ ...sender, address: e.target.value })}
-										/>
-										<Input
-											label="City"
-											placeholder="City"
-											value={sender.city}
-											onChange={(e) => setSender({ ...sender, city: e.target.value })}
-										/>
+                            <Input
+                                label="Address"
+                                placeholder="Address"
+                                value={sender.address}
+                                disabled={true}
+                                onChange={(e) => setSender({ ...sender, address: e.target.value })}
+                            />
+                            <Input
+                                label="City"
+                                placeholder="City"
+                                value={sender.city}
+                                disabled={true}
+                                onChange={(e) => setSender({ ...sender, city: e.target.value })}
+                            />
 									</div>
 
 									<div className="grid grid-cols-2 gap-2 mb-2">
-										<Input
-											label="State"
-											placeholder="State"
-											value={sender.state}
-											onChange={(e) => setSender({ ...sender, state: e.target.value })}
-										/>
-										<Input
-											label="Country"
-											placeholder="Country"
-											value={sender.country}
-											onChange={(e) => setSender({ ...sender, country: e.target.value })}
-										/>
+                            <Input
+                                label="State"
+                                placeholder="State"
+                                value={sender.state}
+                                disabled={true}
+                                onChange={(e) => setSender({ ...sender, state: e.target.value })}
+                            />
+                            <Input
+                                label="Country"
+                                placeholder="Country"
+                                value={"India"}
+                                disabled={true}
+                                onChange={(e) => setSender({ ...sender, country: e.target.value })}
+                            />
 									</div>
 								</div>
 								<div className='bg-white p-4 rounded-md shadow-sm '>
@@ -423,10 +507,10 @@ const EditOrderForm = ({ data, loading, error }) => {
 											}}
 											freeSolo
 											renderInput={(params) => (
-												<TextField {...params} label="Select Receiver Pincode" size="small" />
-											)}
-											fullWidth
-										/>
+                                <TextField {...params} label="Select Receiver Pincode (Optional)" size="small" />
+                                )}
+                                fullWidth
+                            />
 									</div>
 									{/* Auto-filled Sender Details */}
 									<div className="grid grid-cols-3 gap-2 mb-2">
@@ -434,8 +518,8 @@ const EditOrderForm = ({ data, loading, error }) => {
 										<Input
 											label="Name"
 											placeholder="Enter Name"
-											value={receiver.name}
-											onChange={(e) => setReceiver({ ...receiver, name: e.target.value })}
+											value={receiver.consignee_name}
+											onChange={(e) => setReceiver({ ...receiver, consignee_name: e.target.value })}
 										/>
 										<Input
 											label="Mobile"
@@ -460,8 +544,8 @@ const EditOrderForm = ({ data, loading, error }) => {
 										<Input
 											label="Address"
 											placeholder="Enter Your Address"
-											value={receiver.address}
-											onChange={(e) => setReceiver({ ...receiver, address: e.target.value })}
+											value={receiver.address_line}
+											onChange={(e) => setReceiver({ ...receiver, address_line: e.target.value })}
 										/>
 										<Input
 											label="City"
@@ -547,7 +631,9 @@ const EditOrderForm = ({ data, loading, error }) => {
 											<span className="font-medium text-sm text-gray-800">Chargeable Weight </span>
 											<InformationCircleIcon className="w-4 h-4 text-gray-400 ml-2" />
 										</div>
-										<p className="text-gray-500 text-sm mt-1">{chargeableWeight} gm</p>
+										<p className="text-gray-500 text-sm mt-1">
+											{chargeableWeight.toFixed(2)} gm
+										</p>
 									</div>
 								</div>
 							</div>
@@ -585,7 +671,12 @@ const EditOrderForm = ({ data, loading, error }) => {
 						<button type="button" className="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">
 							Save Changes
 						</button>
-						<button onClick={handleSubmit} className={`px-5 py-2 rounded-md text-white ${isSubmitting ? 'bg-gray-600 cursor-not-allowed' : 'bg-black hover:bg-gray-900'}`} disabled={isSubmitting}>
+						<button
+							type="button"
+							onClick={handleSubmit}
+							className={`px-5 py-2 rounded-md text-white ${isSubmitting ? 'bg-gray-600 cursor-not-allowed' : 'bg-black hover:bg-gray-900'}`}
+							disabled={isSubmitting}
+						>
 							{isSubmitting ? 'Editing...' : 'Edit Order'}
 						</button>
 					</div>
