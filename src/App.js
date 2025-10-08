@@ -21,6 +21,7 @@ import BillingInfo from './pages/BillingInfo';
 import FranchiseBillingInfo from './pages/FranchiseBillingInfo';
 import EditUser from './pages/EditUser';
 import EditAddress from './pages/EditAddress';
+import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -132,6 +133,13 @@ function App() {
         <Route path="/account-details" element={
           <ProtectedRoute allowedRoles={[]}>
             <AccountDetails />
+          </ProtectedRoute>
+        } />
+
+        {/* Settings - accessible to all authenticated users */}
+        <Route path="/settings" element={
+          <ProtectedRoute allowedRoles={[]}>
+            <Settings />
           </ProtectedRoute>
         } />
 

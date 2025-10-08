@@ -93,7 +93,7 @@ const menuItems = [
 	},
 	{ 
 		label: 'Settings', 
-		href: '', 
+		href: '/settings', 
 		icon: <Cog6ToothIcon className="h-5 w-5" />,
 		allowedRoles: ['Admin']
 	},

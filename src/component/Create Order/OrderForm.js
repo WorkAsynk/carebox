@@ -9,6 +9,7 @@ import { buildApiUrl, API_ENDPOINTS } from '../../config/api';
 import { toast } from 'react-toastify';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useSelector } from 'react-redux';
+import { ROLES } from '../../config/rolePermissions';
 
 
 const OrderForm = () => {
@@ -16,7 +17,7 @@ const OrderForm = () => {
 	const { user } = useSelector((state) => state.auth);
 	const rateChart = user?.rate_chart
 	const zones = user?.zones
-
+	const isAdmin = user?.role === ROLES.ADMIN;
 
 	const [sender, setSender] = useState({
 		id: '',
@@ -359,7 +360,7 @@ const OrderForm = () => {
 				order_no: generatedAWB,
 				lr_no: generatedAWB,
 				created_by: user?.id || '1',
-				agent_id: user?.id || '1',
+				agent_id: isAdmin ? user?.id : user?.mf_no,
 				insurance_type: 'owners risk',
 				forwarding_no: 'sdsa',
 				carrier: shippingPartner,
