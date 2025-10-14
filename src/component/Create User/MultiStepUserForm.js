@@ -447,13 +447,11 @@ const MultiStepUserForm = () => {
 		setShowOverlay(true);
 		setOverlayStatus('loading');
 		
-		// Generate MF number only when form is submitted
+		// Generate MF number when form is submitted (for all roles)
 		let finalFormData = { ...formData };
-		if (formData.role === 'Franchise') {
-			const mfNumber = generateMFNumber();
-			finalFormData.mf_no = mfNumber;
-			console.log('Generated MF Number on submit:', mfNumber);
-		}
+		const mfNumber = generateMFNumber();
+		finalFormData.mf_no = mfNumber;
+		console.log('Generated MF Number on submit:', mfNumber);
 		
 		// Convert rate chart data from array to object format for backend
 		let rateChartForBackend = {};
@@ -512,7 +510,7 @@ const MultiStepUserForm = () => {
 				}
 			`}</style>
 			<div className="min-h-screen flex items-start justify-center px-4 py-8 bg-gradient-to-br from-gray-50 to-gray-100">
-			<div className="w-full max-w-6xl bg-white p-8 rounded-2xl border border-gray-200 shadow-2xl backdrop-blur-sm">
+			<div className="w-full max-w-[400px] lg:max-w-6xl bg-white p-8 rounded-2xl border border-gray-200 shadow-2xl backdrop-blur-sm">
 				{/* Header with Step Indicator */}
 				<div className="mb-8 animate-slideIn">
 					<h2 className="text-4xl font-bold text-center bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent mb-6">
@@ -520,8 +518,8 @@ const MultiStepUserForm = () => {
 					</h2>
 					
 					{/* Step Indicator */}
-					<div className="flex justify-center mb-12">
-						<div className="flex w-full gap-20 justify-center items-center space-y-6 bg-gradient-to-b from-red-50 to-white p-3 rounded-2xl border border-red-100 shadow-lg">
+					<div className="flex justify-start lg:justify-center mb-12">
+						<div className="flex w-[400px] overflow-x-auto scrollbar-hide lg:w-auto gap-20 lg:justify-center justify-start items-center space-y-6 bg-gradient-to-b from-red-50 to-white p-3 rounded-2xl border border-red-100 shadow-lg">
 							{/* Step 1 */}
 							<div className="flex items-center flex-col gap-3 group">
 								<div className="relative">
@@ -864,7 +862,7 @@ const MultiStepUserForm = () => {
 								/>
 							</div>
 
-							<div className="flex justify-between">
+							<div className="flex lg:flex-row flex-col gap-5 justify-between">
 								<button
 									type="button"
 									onClick={prevStep}
@@ -915,7 +913,7 @@ const MultiStepUserForm = () => {
 							/>
 
 							{/* Navigation */}
-							<div className="flex justify-between">
+							<div className="flex lg:flex-row flex-col gap-5 justify-between">
 								<button
 									type="button"
 									onClick={prevStep}
@@ -1062,7 +1060,7 @@ const MultiStepUserForm = () => {
 							</div>
 
 							{/* Navigation */}
-							<div className="flex justify-between">
+							<div className="flex lg:flex-row flex-col gap-5 justify-between">
 								<button
 									type="button"
 									onClick={prevStep}

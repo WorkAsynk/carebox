@@ -49,12 +49,12 @@ const UsersList = ({ users, handleDeleteUser }) => {
 	}, [users]);
 
 	return (
-		<div className='max-w-6xl mx-auto mt-5'>
+		<div className='lg:max-w-6xl max-w-[400px] mx-auto mt-5'>
 			{/* Header */}
-			<div className='mb-6 p-6'>
+			<div className='mb-6 lg:p-6'>
 				<div className='flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4'>
 					{/* Left Section - Navigation and Title */}
-					<div className='flex items-center gap-4'>
+					<div className='flex lg:items-center justify-start lg:justify-between gap-4'>
 						<Link to={"/"}>
 							<button className='group flex items-center justify-center w-10 h-10 border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 shadow-sm'>
 								<FaArrowLeft className='text-gray-600 group-hover:text-gray-800 transition-colors' />

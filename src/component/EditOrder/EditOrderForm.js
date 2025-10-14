@@ -357,12 +357,12 @@ const EditOrderForm = ({ data, loading, error }) => {
 				</div>
 
 				{/* Form Grid */}
-				<div className="min-h-screen bg-gray-50 p-6">
+				<div className="min-h-screen bg-gray-50 lg:p-6">
 					<div className="max-w-5xl mx-auto space-y-6">
 						{/* Order Detail Section */}
 						<div className="bg-white p-4 rounded-md shadow-sm">
 							<h2 className="font-semibold text-gray-700 mb-2">Order Detail</h2>
-							<div className="grid grid-cols-3 gap-4">
+							<div className="grid lg:grid-cols-3 grid-cols-1 gap-4">
 								<div className='cols-span-1'>
 									<Input label="AWB Number" disabled={true} value={awbNumber}  onChange={(e) => setAwbNumber(e.target.value)} placeholder="Enter AWB Number" />
 									{/* <div className='flex justify-start items-center'>
@@ -413,7 +413,7 @@ const EditOrderForm = ({ data, loading, error }) => {
 									<hr className="mt-2 mb-2" />
 
 									{/* Auto-filled Sender Details */}
-									<div className="grid grid-cols-2 gap-2 mb-2">
+									<div className="grid lg:grid-cols-2 grid-cols-1 gap-2 mb-2">
                             <Input
                                 label="Name"
                                 placeholder="Enter Name"
@@ -430,7 +430,7 @@ const EditOrderForm = ({ data, loading, error }) => {
                             />
 									</div>
 
-									<div className="grid grid-cols-2 gap-2 mt-2">
+									<div className="grid lg:grid-cols-2 grid-cols-1 gap-2 mt-2">
                             <Input
                                 label="Email"
                                 placeholder="Enter Email"
@@ -448,7 +448,7 @@ const EditOrderForm = ({ data, loading, error }) => {
 									</div>
 
 									<h2 className="font-semibold text-gray-700 mb-2 mt-2">Address</h2>
-									<div className="grid grid-cols-2 gap-2 mb-2 mt-4">
+									<div className="grid lg:grid-cols-2 grid-cols-1 gap-2 mb-2 mt-4">
                             <Input
                                 label="Address"
                                 placeholder="Address"
@@ -465,7 +465,7 @@ const EditOrderForm = ({ data, loading, error }) => {
                             />
 									</div>
 
-									<div className="grid grid-cols-2 gap-2 mb-2">
+									<div className="grid lg:grid-cols-2 grid-cols-1 gap-2 mb-2">
                             <Input
                                 label="State"
                                 placeholder="State"
@@ -486,7 +486,7 @@ const EditOrderForm = ({ data, loading, error }) => {
 									<h2 className="font-semibold text-gray-700 mb-2">Reciver Detail</h2>
 									<hr className="mt-2 mb-2" />
 
-									<div className='grid grid-cols-3 gap-2 mb-2 '>
+									<div className='grid lg:grid-cols-3 grid-cols-1 gap-2 mb-2 '>
 										<Autocomplete
 											options={receiverPins} // array of strings (e.g., ["400003", "400004", ...])
 											value={selectedReceiverPin || null} // controlled value
@@ -513,7 +513,7 @@ const EditOrderForm = ({ data, loading, error }) => {
                             />
 									</div>
 									{/* Auto-filled Sender Details */}
-									<div className="grid grid-cols-3 gap-2 mb-2">
+									<div className="grid lg:grid-cols-3 grid-cols-1 gap-2 mb-2">
 
 										<Input
 											label="Name"
@@ -534,7 +534,7 @@ const EditOrderForm = ({ data, loading, error }) => {
 											onChange={(e) => setReceiver({ ...receiver, email: e.target.value })}
 										/>
 									</div>
-									<div className="grid grid-cols-3 gap-2 mb-2">
+									<div className="grid lg:grid-cols-3 grid-cols-1 gap-2 mb-2">
 										<Input
 											label="Company Name"
 											placeholder="Enter Company Name"
@@ -554,7 +554,7 @@ const EditOrderForm = ({ data, loading, error }) => {
 											onChange={(e) => setReceiver({ ...receiver, city: e.target.value })}
 										/>
 									</div>
-									<div className="grid grid-cols-3 gap-2 mb-2">
+									<div className="grid lg:grid-cols-3 grid-cols-1 gap-2 mb-2">
 										<Input
 											label="State"
 											placeholder="Enter State"

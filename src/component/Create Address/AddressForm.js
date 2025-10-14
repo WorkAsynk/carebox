@@ -136,7 +136,7 @@ const AddressForm = () => {
 					{/* User Detail */}
 					<div className="space-y-2 bg-white p-6 rounded-md shadow-sm">
 						<h2 className="font-semibold text-gray-700">User Detail</h2>
-						<div className="grid grid-cols-2 gap-4">
+						<div className="grid lg:grid-cols-2 grid-cols-1 gap-4">
 							<Autocomplete
 								options={users}
 								// Fallbacks so it doesn't crash if name is missing
@@ -181,7 +181,7 @@ const AddressForm = () => {
 						{/* ✅ client_name replaces consignee_name */}
 						<Input label="Contact Person Name" name="consignee_name" onChange={handleChange} />
 
-						<div className="grid grid-cols-2 gap-4">
+						<div className="grid lg:grid-cols-2 grid-cols-1 gap-4">
 							<Input label="Email" name="email" onChange={handleChange} />
 							{/* ✅ phone replaces additional_phone */}
 							<Input label="Phone" name="phone" onChange={handleChange} />

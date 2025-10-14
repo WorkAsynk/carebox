@@ -15,9 +15,13 @@ import { ROLES } from '../../config/rolePermissions';
 const OrderForm = () => {
 
 	const { user } = useSelector((state) => state.auth);
-	const rateChart = user?.rate_chart
-	const zones = user?.zones
 	const isAdmin = user?.role === ROLES.ADMIN;
+	const isFranchise = user?.role === ROLES.FRANCHISE;
+	
+	// Only include rate_chart and zones if user is Franchise AND carrier is Self
+	const shouldIncludeRateChartAndZones = isFranchise && shippingPartner?.toLowerCase() === 'self';
+	const rateChart = shouldIncludeRateChartAndZones ? user?.rate_chart : undefined;
+	const zones = shouldIncludeRateChartAndZones ? user?.zones : undefined;
 
 	const [sender, setSender] = useState({
 		id: '',
@@ -350,6 +354,13 @@ const OrderForm = () => {
 				return parseFloat(n.toFixed(2));
 			};
 
+			// Extract integer from MF number (remove non-digits like 'MF-')
+			const extractMfInteger = (mf) => {
+				const digits = String(mf || '').replace(/\D/g, '');
+				return digits ? parseInt(digits, 10) : '';
+			};
+			const mfInteger = extractMfInteger(user?.mf_no);
+
 			// Prepare order data to be sent to the API (only accepted fields)
 			const orderData = {
 				sender_address_id: user?.id || '1',
@@ -360,7 +371,7 @@ const OrderForm = () => {
 				order_no: generatedAWB,
 				lr_no: generatedAWB,
 				created_by: user?.id || '1',
-				agent_id: isAdmin ? user?.id : user?.mf_no,
+				agent_id: isAdmin ? user?.id : mfInteger,
 				insurance_type: 'owners risk',
 				forwarding_no: 'sdsa',
 				carrier: shippingPartner,
@@ -451,12 +462,12 @@ const OrderForm = () => {
 				</div>
 
 				{/* Form Grid */}
-				<div className="min-h-screen bg-gray-50 p-6">
+				<div className="min-h-screen bg-gray-50 lg:p-6">
 					<div className="max-w-5xl mx-auto space-y-6">
 						{/* Order Detail Section */}
 						<div className="bg-white p-4 rounded-md shadow-sm">
 							<h2 className="font-semibold text-gray-700 mb-2">Order Detail</h2>
-							<div className="grid grid-cols-3 gap-4">
+							<div className="grid lg:grid-cols-3 grid-cols-1 gap-4">
 								<div className='cols-span-1'>
 									<Input label="AWB Number" value={awbNumber} disabled={awbGenerated ? true : false} onChange={(e) => setAwbNumber(e.target.value)} placeholder="Enter AWB Number" />
 									<div className='flex justify-start items-center'>
@@ -468,19 +479,20 @@ const OrderForm = () => {
 									</div>
 
 								</div>
-								<Input label="MF Number" disabled={true} value={mfnumber} onChange={(e) => setmfnumber(e.target.value)} placeholder="Enter MF Number" />
+								{!isAdmin && <Input label="MF Number" disabled={true} value={mfnumber} onChange={(e) => setmfnumber(e.target.value)} placeholder="Enter MF Number" />}
 
-								<Select
+								{/* <Select
 									value={mode}
 									onChange={(val) => setMode(val)}
 									label="Mode">
 									<Option value="Air">Air</Option>
 									<Option value="Surface">Surface</Option>
-								</Select>
+								</Select> */}
 								<Select
 									value={shippingPartner}
 									onChange={(val) => setShippingPartner(val)}
 									label="Forwarding Partner">
+									<Option value="Self">Self</Option>
 									<Option value="Bluedart">Bluedart</Option>
 									<Option value="DTDC">DTDC</Option>
 									<Option value="Shree Maruthi">Shree Maruthi</Option>
@@ -508,7 +520,7 @@ const OrderForm = () => {
 									<hr className="mt-2 mb-2" />
 
 									{/* Auto-filled Sender Details */}
-									<div className="grid grid-cols-2 gap-2 mb-2">
+									<div className="grid lg:grid-cols-2 grid-cols-1 gap-2 mb-2">
 										<Input
 											label="Name"
 											placeholder="Enter Name"
@@ -525,7 +537,7 @@ const OrderForm = () => {
 										/>
 									</div>
 
-									<div className="grid grid-cols-2 gap-2 mt-2">
+									<div className="grid lg:grid-cols-2 grid-cols-1 gap-2 mt-2">
 										<Input
 											label="Email"
 											placeholder="Enter Email"
@@ -543,7 +555,7 @@ const OrderForm = () => {
 									</div>
 
 									<h2 className="font-semibold text-gray-700 mb-2 mt-2">Address</h2>
-									<div className="grid grid-cols-2 gap-2 mb-2 mt-4">
+									<div className="grid lg:grid-cols-2 grid-cols-1 gap-2 mb-2 mt-4">
 										<Input
 											label="Address"
 											placeholder="Address"
@@ -560,7 +572,7 @@ const OrderForm = () => {
 										/>
 									</div>
 
-									<div className="grid grid-cols-2 gap-2 mb-2">
+									<div className="grid lg:grid-cols-2 grid-cols-1 gap-2 mb-2">
 										<Input
 											label="State"
 											placeholder="State"
@@ -582,7 +594,7 @@ const OrderForm = () => {
 									<h2 className="font-semibold text-gray-700 mb-2">Reciver Detail</h2>
 									<hr className="mt-2 mb-2" />
 
-									<div className='grid grid-cols-3 gap-2 mb-2 '>
+									<div className='grid lg:grid-cols-3 grid-cols-1 gap-2 mb-2 '>
 										<Autocomplete
 											options={receiverPins} // array of strings (e.g., ["400003", "400004", ...])
 											value={selectedReceiverPin || null} // controlled value
@@ -610,7 +622,7 @@ const OrderForm = () => {
 									</div>
 									<p className="text-xs text-gray-500 mb-2">Select a pincode to auto-fill receiver details, or manually enter all receiver information below.</p>
 									{/* Auto-filled Sender Details */}
-									<div className="grid grid-cols-3 gap-2 mb-2">
+									<div className="grid lg:grid-cols-3 grid-cols-1 gap-2 mb-2">
 
 										<Input
 											label="Name"
@@ -631,7 +643,7 @@ const OrderForm = () => {
 											onChange={(e) => setReceiver({ ...receiver, email: e.target.value })}
 										/>
 									</div>
-									<div className="grid grid-cols-3 gap-2 mb-2">
+									<div className="grid lg:grid-cols-3 grid-cols-1 gap-2 mb-2">
 										<Input
 											label="Company Name"
 											placeholder="Enter Company Name"
@@ -651,7 +663,7 @@ const OrderForm = () => {
 											onChange={(e) => setReceiver({ ...receiver, city: e.target.value })}
 										/>
 									</div>
-									<div className="grid grid-cols-3 gap-2 mb-2">
+									<div className="grid lg:grid-cols-3 grid-cols-1 gap-2 mb-2">
 										<Input
 											label="State"
 											placeholder="Enter State"

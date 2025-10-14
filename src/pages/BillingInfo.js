@@ -3,6 +3,9 @@ import Sidebar from '../component/Layout/Sidebar'
 import Topbar from '../component/Layout/Topbar'
 import { useSelector } from 'react-redux'
 import { Input, Select, Option, Textarea } from '@material-tailwind/react'
+import axios from 'axios'
+import { buildApiUrl, API_ENDPOINTS } from '../config/api'
+import { ROLES } from '../config/rolePermissions'
 import { 
   CreditCardIcon,
   BanknotesIcon,
@@ -26,120 +29,83 @@ const BillingInfo = () => {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [filteredData, setFilteredData] = useState([])
-  
-  // Sample billing data
+  const [isFetching, setIsFetching] = useState(false)
+  const todayStr = new Date().toISOString().split('T')[0]
+
+  // Set default date range (last 30 days) and auto-fetch
   useEffect(() => {
-    const sampleBillingData = [
-      {
-        id: 1,
-        mfNumber: 'MF001234',
-        awbNumber: 'AWB2024120101',
-        senderLocationPincode: '400001',
-        receiverLocationPincode: '110001',
-        totalParcel: 150,
-        totalAmount: 25000,
-        clientName: 'ABC Corporation',
-        franchiseName: 'Mumbai Central',
-        invoiceNumber: 'INV-20241201-001',
-        billingAmount: 25000,
-        paidAmount: 25000,
-        pendingAmount: 0,
-        billingDate: '2024-12-01',
-        dueDate: '2024-12-31',
-        status: 'Paid',
-        paymentMethod: 'Bank Transfer',
-        gstNumber: 'GST123456789',
-        totalParcels: 150
-      },
-      {
-        id: 2,
-        mfNumber: 'MF001235',
-        awbNumber: 'AWB2024120202',
-        senderLocationPincode: '110001',
-        receiverLocationPincode: '560001',
-        totalParcel: 85,
-        totalAmount: 18500,
-        clientName: 'XYZ Ltd.',
-        franchiseName: 'Delhi North',
-        invoiceNumber: 'INV-20241202-002',
-        billingAmount: 18500,
-        paidAmount: 10000,
-        pendingAmount: 8500,
-        billingDate: '2024-12-02',
-        dueDate: '2025-01-01',
-        status: 'Partial',
-        paymentMethod: 'Cash',
-        gstNumber: 'GST987654321',
-        totalParcels: 85
-      },
-      {
-        id: 3,
-        mfNumber: 'MF001236',
-        awbNumber: 'AWB2024120303',
-        senderLocationPincode: '560001',
-        receiverLocationPincode: '600001',
-        totalParcel: 200,
-        totalAmount: 32000,
-        clientName: 'Tech Solutions',
-        franchiseName: 'Bangalore South',
-        invoiceNumber: 'INV-20241203-003',
-        billingAmount: 32000,
-        paidAmount: 0,
-        pendingAmount: 32000,
-        billingDate: '2024-12-03',
-        dueDate: '2024-12-25',
-        status: 'Pending',
-        paymentMethod: 'Online',
-        gstNumber: 'GST456789123',
-        totalParcels: 200
-      },
-      {
-        id: 4,
-        mfNumber: 'MF001237',
-        awbNumber: 'AWB2024120404',
-        senderLocationPincode: '600001',
-        receiverLocationPincode: '700001',
-        totalParcel: 300,
-        totalAmount: 45000,
-        clientName: 'Global Enterprises',
-        franchiseName: 'Chennai East',
-        invoiceNumber: 'INV-20241204-004',
-        billingAmount: 45000,
-        paidAmount: 45000,
-        pendingAmount: 0,
-        billingDate: '2024-12-04',
-        dueDate: '2024-12-30',
-        status: 'Paid',
-        paymentMethod: 'UPI',
-        gstNumber: 'GST789123456',
-        totalParcels: 300
-      },
-      {
-        id: 5,
-        mfNumber: 'MF001238',
-        awbNumber: 'AWB2024120505',
-        senderLocationPincode: '700001',
-        receiverLocationPincode: '400001',
-        totalParcel: 75,
-        totalAmount: 15000,
-        clientName: 'Metro Logistics',
-        franchiseName: 'Kolkata West',
-        invoiceNumber: 'INV-20241205-005',
-        billingAmount: 15000,
-        paidAmount: 0,
-        pendingAmount: 15000,
-        billingDate: '2024-12-05',
-        dueDate: '2024-12-20',
-        status: 'Overdue',
-        paymentMethod: 'Bank Transfer',
-        gstNumber: 'GST321654987',
-        totalParcels: 75
-      }
-    ]
-    
-    setBillingData(sampleBillingData)
-    setFilteredData(sampleBillingData)
+    const init = () => {
+      const today = new Date()
+      const end = today.toISOString().split('T')[0]
+      const start = new Date(today)
+      start.setDate(start.getDate() - 30)
+      const startStr = start.toISOString().split('T')[0]
+      setDateFrom(prev => prev || startStr)
+      setDateTo(prev => prev || end)
+    }
+    init()
   }, [])
+
+  useEffect(() => {
+    if (dateFrom && dateTo) {
+      handleFetch()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateFrom, dateTo])
+
+  // Helper to call same API as FranchiseBillingInfo
+  const extractMfInteger = (mf) => {
+    const digits = String(mf || '').replace(/\D/g, '')
+    return digits ? parseInt(digits, 10) : ''
+  }
+
+  const fetchOrdersByDateRange = async ({ start_date, end_date, role, mf_no }) => {
+    try {
+      if (!start_date || !end_date || !role) throw new Error('Missing required parameters')
+      const type = role === ROLES.FRANCHISE ? 'franchise' : 'admin'
+      if (type === 'franchise' && !mf_no) throw new Error('mf_no is required for franchise type')
+      const url = buildApiUrl(API_ENDPOINTS.FETCH_ORDERS_BY_DATERANGE)
+      const response = await axios({ method: 'post', url, params: { start_date, end_date }, data: { type, mf_no }, headers: { 'Content-Type': 'application/json' } })
+      return response?.data
+    } catch (error) {
+      console.error('API Error:', error?.response?.data || error?.message)
+      return null
+    }
+  }
+
+  const handleFetch = async () => {
+    try {
+      setIsFetching(true)
+      if (!dateFrom || !dateTo) return
+      const isFranchise = user?.role === ROLES.FRANCHISE
+      const mfInteger = extractMfInteger(user?.mf_no)
+      const data = await fetchOrdersByDateRange({ start_date: dateFrom, end_date: dateTo, role: user?.role, mf_no: isFranchise ? mfInteger : undefined })
+      if (data?.success && Array.isArray(data?.orders)) {
+        const mapped = data.orders.map((order, idx) => ({
+          id: order?.id || idx,
+          mfNumber: `MF-${String(order?.agent_id || mfInteger || '').toString().padStart(3, '0')}`,
+          awbNumber: order?.lr_no || order?.order_no || '',
+          senderLocationPincode: order?.sender_address?.pincode || order?.sender_pincode || '',
+          receiverLocationPincode: order?.receiver_address?.pincode || order?.receiver_pincode || '',
+          totalParcel: Array.isArray(order?.package_data) ? order.package_data.length : 1,
+          totalAmount: Number(order?.amount || order?.total_amount || order?.price || 0),
+          clientName: user?.name || 'Client',
+          franchiseName: user?.co_name || 'Franchise',
+          invoiceNumber: order?.inv_no || '',
+          billingAmount: Number(order?.amount || order?.total_amount || order?.price || 0),
+          paidAmount: 0,
+          pendingAmount: Number(order?.amount || order?.total_amount || order?.price || 0),
+          billingDate: order?.created_at ? new Date(order.created_at).toISOString().split('T')[0] : todayStr,
+          dueDate: order?.created_at ? new Date(order.created_at).toISOString().split('T')[0] : todayStr,
+          status: order?.status || 'Pending'
+        }))
+        setBillingData(mapped)
+        setFilteredData(mapped)
+      }
+    } finally {
+      setIsFetching(false)
+    }
+  }
 
   // Filter data based on search and filters
   useEffect(() => {
@@ -200,7 +166,7 @@ const BillingInfo = () => {
       <Sidebar />
       <div className='flex-1'>
         <Topbar />
-        <div className='p-6 max-w-[1200px] mx-auto'>
+        <div className='p-6 lg:max-w-[1200px] max-w-[400px] mx-auto'>
           {/* Header */}
           <div className='bg-gradient-to-r from-red-600 to-black rounded-lg shadow-lg p-6 mb-6'>
             <div className="flex items-center gap-4">
@@ -275,7 +241,7 @@ const BillingInfo = () => {
                   placeholder="MF Number, AWB, Pincode, Client, or Invoice"
                 />
               </div>
-              <div>
+              {/* <div>
                 <Select 
                   label="Status"
                   value={statusFilter}
@@ -287,7 +253,7 @@ const BillingInfo = () => {
                   <Option value="Pending">Pending</Option>
                   <Option value="Overdue">Overdue</Option>
                 </Select>
-              </div>
+              </div> */}
               <div>
                 <Input 
                   type="date"
@@ -295,16 +261,19 @@ const BillingInfo = () => {
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                   icon={<CalendarIcon className="w-5 h-5" />}
+                  max={todayStr}
                 />
               </div>
-              <div>
+              <div className='flex items-end gap-3'>
                 <Input 
                   type="date"
                   label="To Date"
                   value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
+                  onChange={(e) => setDateTo(e.target.value > todayStr ? todayStr : e.target.value)}
                   icon={<CalendarIcon className="w-5 h-5" />}
+                  max={todayStr}
                 />
+                {/* Auto-fetch on date change; button removed per requirement */}
               </div>
             </div>
           </div>

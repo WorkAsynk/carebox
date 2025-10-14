@@ -37,7 +37,7 @@ const EditOrder = () => {
     <Sidebar />
     <div className='flex-1'>
       <Topbar />
-      <div className="p-6">
+      <div className="lg:p-6">
         <EditOrderForm data={orderDetails} loading={loading} error={error} />
       </div>
     </div>

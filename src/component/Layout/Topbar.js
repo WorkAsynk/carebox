@@ -6,9 +6,10 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 const Topbar = () => {
-	const [searchType, setSearchType] = useState('AWB');
-	const [dropdownOpen, setDropdownOpen] = useState(false);
-	const [quickactionDropdown, setquickactionDropdown] = useState(false)
+    const [searchType, setSearchType] = useState('AWB');
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [quickactionDropdown, setquickactionDropdown] = useState(false)
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 	const searchTypes = ['AWB', 'Order ID'];
 	const actions = [
 		{ label: 'Create Order', icon: <PlusIcon className="h-4 w-4 text-red-500" /> },
@@ -38,13 +39,26 @@ const Topbar = () => {
 
 	
 	
-	return (
-		<div className="w-full bg-white max-w-[1200px] mx-auto py-3 shadow-sm flex items-center justify-between">
+    return (
+        <div className="w-full bg-white max-w-[1200px] mx-auto py-3 shadow-sm flex items-center justify-between px-2 md:px-0">
 			{/* Left side */}
-			<div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 md:gap-6">
+                {/* Mobile: Hamburger to open sidebar */}
+                <button
+                    className="md:hidden p-2 rounded-md border border-gray-200 active:scale-95 transition"
+                    onClick={() => {
+                        const ev = new Event('toggle-mobile-sidebar');
+                        window.dispatchEvent(ev);
+                    }}
+                    aria-label="Open menu"
+                >
+                    <span className="block w-5 h-0.5 bg-gray-700 mb-1"></span>
+                    <span className="block w-5 h-0.5 bg-gray-700 mb-1"></span>
+                    <span className="block w-5 h-0.5 bg-gray-700"></span>
+                </button>
 
 				{/* Dropdown + Search */}
-				<div className='flex justify-center items-center gap-0'>
+                <div className='hidden md:flex justify-center items-center gap-0'>
 					<div className="relative">
 						<button
 							onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -81,11 +95,11 @@ const Topbar = () => {
 			</div>
 
 			{/* Right side */}
-			<div className="flex items-center gap-5">
+            <div className="flex items-center gap-3 md:gap-5">
 				<div className='relative'>
 					<button
 						onClick={() => setquickactionDropdown(!quickactionDropdown)}
-						className="flex items-center gap-2 px-4 py-2 text-sm bg-black text-white rounded-full hover:bg-red-600 transition-all duration-200"
+                        className="hidden md:flex items-center gap-2 px-4 py-2 text-sm bg-black text-white rounded-full hover:bg-red-600 transition-all duration-200"
 					>
 						<BoltIcon className="h-4 w-4" />
 						Quick Actions
@@ -110,7 +124,30 @@ const Topbar = () => {
 					)}
 				</div>
 
-				
+                {/* Mobile search button */}
+                <button
+                    className="md:hidden p-2 rounded-md border border-gray-200"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    aria-label="Search"
+                >
+                    <DocumentTextIcon className="h-5 w-5 text-gray-700" />
+                </button>
+
+                {/* Mobile search dropdown */}
+                {mobileMenuOpen && (
+                    <div className="absolute top-14 left-2 right-2 bg-white border border-gray-200 rounded-md shadow-lg p-3 md:hidden">
+                        <div className='flex gap-2'>
+                            <select
+                                className='border border-gray-300 px-2 py-2 rounded-md text-sm'
+                                value={searchType}
+                                onChange={(e) => setSearchType(e.target.value)}
+                            >
+                                {searchTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                            <input className='flex-1 border border-gray-300 px-3 py-2 rounded-md text-sm' placeholder={`Search ${searchType}`} />
+                        </div>
+                    </div>
+                )}
 
 				{/* User Initial */}
 				<button

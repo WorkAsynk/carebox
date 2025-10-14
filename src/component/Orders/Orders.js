@@ -48,7 +48,7 @@ const Orders = ({orders, handleDeleteOrder}) => {
 	const fetchOrders = async () => {
 		setLoading(true);
 		try {
-			const response = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_ORDERS));
+			const response = await axios.post(buildApiUrl(API_ENDPOINTS.FETCH_ALL_ORDERS));
 			console.log('API Response:', response.data);
 			if (response.data.success) {
 				// Process orders to ensure they have a status
@@ -212,7 +212,7 @@ const Orders = ({orders, handleDeleteOrder}) => {
 		});
 	}, [ordersList, canViewAmount]);
   return (
-    <div className='max-w-6xl mx-auto mt-5'>
+    <div className='lg:max-w-6xl max-w-[400px] mx-auto mt-5'>
     {/* Header */}
     <div className='mb-6 p-6'>
         <div className='flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4'>

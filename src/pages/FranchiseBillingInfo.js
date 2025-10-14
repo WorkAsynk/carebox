@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react'
 import Sidebar from '../component/Layout/Sidebar'
 import Topbar from '../component/Layout/Topbar'
 import { useSelector } from 'react-redux'
-import { Input, Select, Option, Textarea } from '@material-tailwind/react'
+import { Input } from '@material-tailwind/react'
+import axios from 'axios'
+import { buildApiUrl, API_ENDPOINTS } from '../config/api'
+import { ROLES } from '../config/rolePermissions'
 import { 
   CreditCardIcon,
   BanknotesIcon,
@@ -13,7 +16,9 @@ import {
   CurrencyDollarIcon,
   ChartBarIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ArrowPathIcon,
+  CloudArrowDownIcon
 } from '@heroicons/react/24/outline'
 
 const FranchiseBillingInfo = () => {
@@ -21,169 +26,147 @@ const FranchiseBillingInfo = () => {
   
   // Form state management
   const [billingData, setBillingData] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [filteredData, setFilteredData] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isFetching, setIsFetching] = useState(false)
+  const todayStr = new Date().toISOString().split('T')[0]
   
-  // Sample franchise billing data
+  // Initialize default date range (last 30 days) on mount
   useEffect(() => {
-    const sampleFranchiseBillingData = [
-      {
-        id: 1,
-        mfNumber: 'MF001234',
-        awbNumber: 'AWB2024120101',
-        senderLocationPincode: '400001',
-        receiverLocationPincode: '110001',
-        totalParcel: 150,
-        totalAmount: 25000,
-        franchiseName: 'Mumbai Central',
-        franchiseCode: 'MUM001',
-        franchiseOwner: 'Rajesh Sharma',
-        franchiseContact: '+91-9876543210',
-        invoiceNumber: 'FINV-20241201-001',
-        billingAmount: 25000,
-        paidAmount: 25000,
-        pendingAmount: 0,
-        billingDate: '2024-12-01',
-        dueDate: '2024-12-31',
-        status: 'Paid',
-        paymentMethod: 'Bank Transfer',
-        gstNumber: 'GST123456789',
-        totalParcels: 150
-      },
-      {
-        id: 2,
-        mfNumber: 'MF001235',
-        awbNumber: 'AWB2024120202',
-        senderLocationPincode: '110001',
-        receiverLocationPincode: '560001',
-        totalParcel: 85,
-        totalAmount: 18500,
-        franchiseName: 'Delhi North',
-        franchiseCode: 'DEL002',
-        franchiseOwner: 'Priya Singh',
-        franchiseContact: '+91-9876543211',
-        invoiceNumber: 'FINV-20241202-002',
-        billingAmount: 18500,
-        paidAmount: 10000,
-        pendingAmount: 8500,
-        billingDate: '2024-12-02',
-        dueDate: '2025-01-01',
-        status: 'Partial',
-        paymentMethod: 'Cash',
-        gstNumber: 'GST987654321',
-        totalParcels: 85
-      },
-      {
-        id: 3,
-        mfNumber: 'MF001236',
-        awbNumber: 'AWB2024120303',
-        senderLocationPincode: '560001',
-        receiverLocationPincode: '600001',
-        totalParcel: 200,
-        totalAmount: 32000,
-        franchiseName: 'Bangalore South',
-        franchiseCode: 'BLR003',
-        franchiseOwner: 'Amit Kumar',
-        franchiseContact: '+91-9876543212',
-        invoiceNumber: 'FINV-20241203-003',
-        billingAmount: 32000,
-        paidAmount: 0,
-        pendingAmount: 32000,
-        billingDate: '2024-12-03',
-        dueDate: '2024-12-25',
-        status: 'Pending',
-        paymentMethod: 'Online',
-        gstNumber: 'GST456789123',
-        totalParcels: 200
-      },
-      {
-        id: 4,
-        mfNumber: 'MF001237',
-        awbNumber: 'AWB2024120404',
-        senderLocationPincode: '600001',
-        receiverLocationPincode: '700001',
-        totalParcel: 300,
-        totalAmount: 45000,
-        franchiseName: 'Chennai East',
-        franchiseCode: 'CHN004',
-        franchiseOwner: 'Sunita Patel',
-        franchiseContact: '+91-9876543213',
-        invoiceNumber: 'FINV-20241204-004',
-        billingAmount: 45000,
-        paidAmount: 45000,
-        pendingAmount: 0,
-        billingDate: '2024-12-04',
-        dueDate: '2024-12-30',
-        status: 'Paid',
-        paymentMethod: 'UPI',
-        gstNumber: 'GST789123456',
-        totalParcels: 300
-      },
-      {
-        id: 5,
-        mfNumber: 'MF001238',
-        awbNumber: 'AWB2024120505',
-        senderLocationPincode: '700001',
-        receiverLocationPincode: '400001',
-        totalParcel: 75,
-        totalAmount: 15000,
-        franchiseName: 'Kolkata West',
-        franchiseCode: 'KOL005',
-        franchiseOwner: 'Vikram Gupta',
-        franchiseContact: '+91-9876543214',
-        invoiceNumber: 'FINV-20241205-005',
-        billingAmount: 15000,
-        paidAmount: 0,
-        pendingAmount: 15000,
-        billingDate: '2024-12-05',
-        dueDate: '2024-12-20',
-        status: 'Overdue',
-        paymentMethod: 'Bank Transfer',
-        gstNumber: 'GST321654987',
-        totalParcels: 75
-      }
-    ]
-    
-    setBillingData(sampleFranchiseBillingData)
-    setFilteredData(sampleFranchiseBillingData)
+    const today = new Date()
+    const end = today.toISOString().split('T')[0]
+    const start = new Date(today)
+    start.setDate(start.getDate() - 30)
+    const startStr = start.toISOString().split('T')[0]
+    setDateFrom(startStr)
+    setDateTo(end)
   }, [])
 
-  // Filter data based on search and filters
+  // Helper: extract digits from MF no (e.g., "MF-012" -> 12)
+  const extractMfInteger = (mf) => {
+    const digits = String(mf || '').replace(/\D/g, '')
+    return digits ? parseInt(digits, 10) : ''
+  }
+
+  // Helper to call API with query params and JSON body; type derived from role
+  const fetchOrdersByDateRange = async ({ start_date, end_date, role, mf_no }) => {
+    try {
+      if (!start_date || !end_date || !role) {
+        throw new Error('Missing required parameters')
+      }
+      const type = role === ROLES.FRANCHISE ? 'franchise' : 'admin'
+      if (type === 'franchise' && !mf_no) {
+        throw new Error('mf_no is required for franchise type')
+      }
+      const url = buildApiUrl(API_ENDPOINTS.FETCH_ORDERS_BY_DATERANGE)
+      const response = await axios({
+        method: 'post',
+        url,
+        params: { start_date, end_date },
+        data: { type, mf_no },
+        headers: { 'Content-Type': 'application/json' }
+      })
+      return response?.data
+    } catch (error) {
+      console.error('API Error:', error?.response?.data || error?.message)
+      return null
+    }
+  }
+
+  // Fetch billing data (can be called by button)
+  const fetchBilling = async () => {
+    try {
+      setIsFetching(true)
+      if (!dateFrom || !dateTo) return
+      const isFranchise = user?.role === ROLES.FRANCHISE
+      const mfInteger = extractMfInteger(user?.mf_no)
+
+      // Use helper to fetch
+      const data = await fetchOrdersByDateRange({
+        start_date: dateFrom,
+        end_date: dateTo,
+        role: user?.role,
+        mf_no: isFranchise ? mfInteger : undefined
+      })
+
+      if (data?.success && Array.isArray(data?.orders)) {
+        const mapped = data.orders.map((order, idx) => {
+          const mfInt = order?.agent_id || mfInteger || ''
+          const mfPadded = String(mfInt || '').toString().padStart(3, '0')
+          const senderPin = order?.sender_address?.pincode || order?.sender_pincode || ''
+          const receiverPin = order?.receiver_address?.pincode || order?.receiver_pincode || ''
+          const amount = order?.amount || order?.total_amount || order?.price || 0
+          const createdAt = order?.created_at ? new Date(order.created_at) : null
+          const billingDate = createdAt ? createdAt.toISOString().split('T')[0] : ''
+          return {
+            id: order?.id || idx,
+            mfNumber: `MF-${mfPadded}`,
+            awbNumber: order?.lr_no || order?.order_no || '',
+            senderLocationPincode: senderPin,
+            receiverLocationPincode: receiverPin,
+            totalParcel: Array.isArray(order?.package_data) ? order.package_data.length : 1,
+            totalAmount: Number(amount) || 0,
+            franchiseName: user?.co_name || 'Franchise',
+            franchiseCode: '',
+            billingAmount: Number(amount) || 0,
+        paidAmount: 0,
+            pendingAmount: Number(amount) || 0,
+            billingDate,
+            dueDate: billingDate,
+            status: order?.status || 'Pending',
+            invoiceNumber: order?.inv_no || '',
+          }
+        })
+        setBillingData(mapped)
+        setFilteredData(mapped)
+      } else {
+        setBillingData([])
+        setFilteredData([])
+      }
+    } catch (err) {
+      console.error('Failed to fetch franchise billing info:', err)
+      setBillingData([])
+      setFilteredData([])
+    } finally {
+      setIsFetching(false)
+    }
+  }
+
+  // Auto-fetch on initial mount after dates are set
+  useEffect(() => {
+    if (dateFrom && dateTo) {
+      fetchBilling()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateFrom, dateTo])
+
+  // Keep filteredData in sync with billingData (no search/status filters now)
+  useEffect(() => {
+    setFilteredData(billingData)
+  }, [billingData])
+
+  // Date range + search filter
   useEffect(() => {
     let filtered = billingData
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(item => 
-        item.franchiseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.franchiseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.franchiseOwner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.mfNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.awbNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.senderLocationPincode.includes(searchTerm) ||
-        item.receiverLocationPincode.includes(searchTerm)
-      )
-    }
-
-    // Status filter
-    if (statusFilter) {
-      filtered = filtered.filter(item => item.status === statusFilter)
-    }
-
-    // Date range filter
     if (dateFrom) {
       filtered = filtered.filter(item => new Date(item.billingDate) >= new Date(dateFrom))
     }
     if (dateTo) {
       filtered = filtered.filter(item => new Date(item.billingDate) <= new Date(dateTo))
     }
-
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      filtered = filtered.filter(item =>
+        item.mfNumber?.toLowerCase().includes(term) ||
+        item.awbNumber?.toLowerCase().includes(term) ||
+        String(item.senderLocationPincode || '').includes(term) ||
+        String(item.receiverLocationPincode || '').includes(term)
+      )
+    }
     setFilteredData(filtered)
-  }, [searchTerm, statusFilter, dateFrom, dateTo, billingData])
+  }, [dateFrom, dateTo, searchTerm, billingData])
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -211,14 +194,14 @@ const FranchiseBillingInfo = () => {
       <Sidebar />
       <div className='flex-1'>
         <Topbar />
-        <div className='p-6 max-w-[1200px] mx-auto'>
+        <div className='p-6 lg:max-w-[1200px] max-w-[400px] mx-auto'>
           {/* Header */}
           <div className='bg-gradient-to-r from-red-600 to-black rounded-lg shadow-lg p-6 mb-6'>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <div className="p-3 bg-white rounded-full shadow-md">
                 <BuildingOfficeIcon className="w-8 h-8 text-red-600" />
               </div>
-              <div>
+              <div className='flex-1'>
                 <h1 className='text-2xl font-semibold text-white mb-1'>Franchise Billing Information</h1>
                 <p className='text-red-100'>Comprehensive franchise billing and payment tracking</p>
               </div>
@@ -283,21 +266,8 @@ const FranchiseBillingInfo = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   icon={<DocumentTextIcon className="w-5 h-5" />}
-                  placeholder="Franchise, MF Number, AWB, Pincode, or Owner"
+                  placeholder="MF Number, AWB, Pincode"
                 />
-              </div>
-              <div>
-                <Select 
-                  label="Status"
-                  value={statusFilter}
-                  onChange={(val) => setStatusFilter(val)}
-                >
-                  <Option value="">All Status</Option>
-                  <Option value="Paid">Paid</Option>
-                  <Option value="Partial">Partial</Option>
-                  <Option value="Pending">Pending</Option>
-                  <Option value="Overdue">Overdue</Option>
-                </Select>
               </div>
               <div>
                 <Input 
@@ -306,133 +276,130 @@ const FranchiseBillingInfo = () => {
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                   icon={<CalendarIcon className="w-5 h-5" />}
+                  max={todayStr}
                 />
               </div>
-              <div>
-                <Input 
-                  type="date"
-                  label="To Date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  icon={<CalendarIcon className="w-5 h-5" />}
-                />
+              <div className='flex items-end gap-3'>
+                <div className='flex-1'>
+                  <Input 
+                    type="date"
+                    label="To Date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value > todayStr ? todayStr : e.target.value)}
+                    icon={<CalendarIcon className="w-5 h-5" />}
+                    max={todayStr}
+                  />
+                </div>
+                {/* <button
+                  onClick={fetchBilling}
+                  disabled={isFetching}
+                  className={`h-[42px] min-w-[200px] px-4 rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2
+                    ${isFetching ? 'bg-red-400 cursor-not-allowed' : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'} text-white font-semibold`}
+                >
+                  {isFetching ? (
+                    <>
+                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                      <span>Fetching...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CloudArrowDownIcon className="w-5 h-5" />
+                      <span>Fetch Orders</span>
+                    </>
+                  )}
+                </button> */}
               </div>
             </div>
           </div>
 
-          {/* Franchise Billing Table */}
+          {/* Franchise Billing Table - match BillingInfo layout */}
           <div className='bg-white rounded-lg shadow-lg border-2 border-red-100 overflow-hidden'>
             <div className="px-6 py-4 border-b-2 border-red-500 bg-gradient-to-r from-red-50 to-white">
               <h2 className='text-lg font-semibold text-black'>
                 Franchise Billing Records ({filteredData.length})
               </h2>
             </div>
-            
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-black">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                      MF Number
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                      AWB No
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                      Sender Location Pincode
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                      Receiver Location Pincode
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                      Total Parcel
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                      Total Amount
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredData.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                              <DocumentTextIcon className="w-4 h-4 text-red-600" />
-                            </div>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-black">{item.mfNumber}</div>
-                            <div className="text-xs text-gray-500">{item.franchiseCode}</div>
-                          </div>
+              <div className="grid grid-cols-5 text-left bg-black text-white font-semibold px-4 py-3 rounded-t-md text-sm min-w-[700px]">
+                <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">MF Number</div>
+                <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">Total Parcel</div>
+                <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">Total Amount</div>
+                <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">Bill Date</div>
+                <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">Due Date</div>
+              </div>
+              {filteredData.map((item) => (
+                <div key={item.id} className="grid grid-cols-5 text-sm px-4 py-3 border-b hover:bg-gray-50 min-w-[700px]">
+                  <div className="px-2 py-2">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-8 w-8">
+                        <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+                          <DocumentTextIcon className="w-4 h-4 text-red-600" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-black">{item.awbNumber}</div>
-                        <div className="text-xs text-gray-500">{item.franchiseName}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center">
-                              <BuildingOfficeIcon className="w-4 h-4 text-white" />
-                            </div>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-black">{item.senderLocationPincode}</div>
-                            <div className="text-xs text-gray-500">Sender</div>
-                          </div>
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-black">{item.mfNumber}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-2 py-2">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-8 w-8">
+                        <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center">
+                          <ChartBarIcon className="w-4 h-4 text-white" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center">
-                              <BuildingOfficeIcon className="w-4 h-4 text-white" />
-                            </div>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-black">{item.receiverLocationPincode}</div>
-                            <div className="text-xs text-gray-500">Receiver</div>
-                          </div>
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-black">{item.totalParcel.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Parcels</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-2 py-2">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-8 w-8">
+                        <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center">
+                          <CurrencyDollarIcon className="w-4 h-4 text-white" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center">
-                              <ChartBarIcon className="w-4 h-4 text-white" />
-                            </div>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-black">{item.totalParcel.toLocaleString()}</div>
-                            <div className="text-xs text-gray-500">Parcels</div>
-                          </div>
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-red-600">₹{item.totalAmount.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Amount</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-2 py-2">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-8 w-8">
+                        <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center">
+                          <CalendarIcon className="w-4 h-4 text-white" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center">
-                              <CurrencyDollarIcon className="w-4 h-4 text-white" />
-                            </div>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-red-600">₹{item.totalAmount.toLocaleString()}</div>
-                            <div className="text-xs text-gray-500">Amount</div>
-                          </div>
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-black">{item.billingDate ? new Date(item.billingDate).toLocaleDateString() : 'N/A'}</div>
+                        <div className="text-xs text-gray-500">Bill Date</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-2 py-2">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-8 w-8">
+                        <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center">
+                          <CalendarIcon className="w-4 h-4 text-white" />
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-red-600">{item.dueDate ? new Date(item.dueDate).toLocaleDateString() : 'N/A'}</div>
+                        <div className="text-xs text-gray-500">Due Date</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {filteredData.length === 0 && (
               <div className="text-center py-12">
-                <BuildingOfficeIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">No franchise billing records found</h3>
                 <p className="mt-1 text-sm text-gray-500">Try adjusting your search criteria or filters.</p>
               </div>

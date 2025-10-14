@@ -19,9 +19,13 @@ import CreateInvoice from './pages/CreateInvoice';
 import InvoiceDownload from './pages/InvoiceDownload';
 import BillingInfo from './pages/BillingInfo';
 import FranchiseBillingInfo from './pages/FranchiseBillingInfo';
+import ShippingLabel from './pages/ShippingLabel';
+import Waybill from './pages/Waybill';
 import EditUser from './pages/EditUser';
 import EditAddress from './pages/EditAddress';
 import Settings from './pages/Settings';
+import Tracker from './pages/Tracker';
+import CreateBag from './pages/CreateBag';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -36,6 +40,13 @@ function App() {
         
         {/* Home - accessible to all authenticated users */}
         <Route path="/" element={isAuthenticated ? <Home /> : <Login />} />
+        
+        {/* Tracker - accessible to all authenticated users */}
+        <Route path="/tracker" element={
+          <ProtectedRoute allowedRoles={[]}>
+            <Tracker />
+          </ProtectedRoute>
+        } />
         
         {/* User Management - Admin only */}
         <Route path="/create-user" element={
@@ -92,6 +103,16 @@ function App() {
             <OrderDetails />
           </ProtectedRoute>
         } />
+        <Route path="/shipping-label/:id" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager', 'Developer', 'Client']}>
+            <ShippingLabel />
+          </ProtectedRoute>
+        } />
+        <Route path="/waybill/:id" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager', 'Developer', 'Client']}>
+            <Waybill />
+          </ProtectedRoute>
+        } />
         
         {/* Rate Calculator - Admin, Franchise, Operational Manager, Developer (All except Client) */}
         <Route path="/international-calculator" element={
@@ -124,8 +145,15 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/franchise-billing-info" element={
-          <ProtectedRoute allowedRoles={['Admin', 'Operational Manager', 'Franchise']}>
+          <ProtectedRoute allowedRoles={['Franchise']}>
             <FranchiseBillingInfo />
+          </ProtectedRoute>
+        } />
+
+        {/* Bags - Admin, Franchise, Operational Manager */}
+        <Route path="/create-bag" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager']}>
+            <CreateBag />
           </ProtectedRoute>
         } />
         

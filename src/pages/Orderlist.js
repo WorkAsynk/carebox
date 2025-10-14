@@ -4,24 +4,47 @@ import Sidebar from '../component/Layout/Sidebar';
 import Topbar from '../component/Layout/Topbar';
 import Orders from '../component/Orders/Orders';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { useSelector } from 'react-redux';
+import { ROLES } from '../config/rolePermissions';
 
 const Orderlist = () => {
 
+    const { user } = useSelector((state) => state.auth);
     const [orders, setOrders] = useState([]);
     const [showOverlay, setShowOverlay] = useState(false);
     const [overlayStatus, setOverlayStatus] = useState('loading'); // 'loading' | 'success'
 
+    const extractMfInteger = (mf) => {
+        const digits = String(mf || '').replace(/\D/g, '');
+        return digits ? parseInt(digits, 10) : '';
+    };
+
     useEffect(() => {
-        const fetchUsers = async () => {
+        const fetchOrders = async () => {
             try {
-                const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/order/fetchAllOrders`);
-                setOrders(res.data || []);
+                const isFranchise = user?.role === ROLES.FRANCHISE;
+                const payload = {
+                    type: isFranchise ? 'franchise' : 'admin',
+                    ...(isFranchise ? { mf_no: extractMfInteger(user?.mf_no) } : {})
+                };
+                const res = await axios({
+                    method: 'post',
+                    url: `${process.env.REACT_APP_API_URL}/api/order/fetchAllOrders`,
+                    data: payload,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (res.data?.success) {
+                    const processed = (res.data.orders || []).map(o => ({ ...o, status: o.status || 'created' }));
+                    setOrders(processed);
+                } else {
+                    setOrders(res.data || []);
+                }
             } catch (error) {
-                console.error('Error fetching users:', error);
+                console.error('Error fetching orders:', error);
             }
         };
-        fetchUsers();
-    }, []);
+        fetchOrders();
+    }, [user]);
 
     const handleDeleteOrder = async (order_id) => {
         try {

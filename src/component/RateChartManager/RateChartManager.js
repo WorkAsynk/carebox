@@ -408,55 +408,55 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
 			{/* Method Selection */}
-			<div className="bg-gradient-to-r from-red-50 to-white p-4 rounded-lg border border-red-100">
-				<h4 className="text-lg font-semibold text-red-800 mb-2 flex items-center">
-					<DocumentChartBarIcon className="w-5 h-5 mr-2" />
+			<div className="bg-gradient-to-r from-red-50 to-white p-3 sm:p-4 rounded-lg border border-red-100">
+				<h4 className="text-base sm:text-lg font-semibold text-red-800 mb-1 sm:mb-2 flex items-center">
+					<DocumentChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
 					Step 3: Rate Chart Update
 				</h4>
-				<p className="text-sm text-red-600">Choose your preferred method to create rate charts</p>
+				<p className="text-xs sm:text-sm text-red-600">Choose your preferred method to create rate charts</p>
 			</div>
 			
-			<div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-				<h4 className="text-xl font-semibold text-gray-800 mb-6">Choose Rate Chart Method</h4>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm">
+				<h4 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Choose Rate Chart Method</h4>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 					{/* CSV Upload Option */}
 					<div 
-						className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+						className={`p-4 sm:p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
 							rateChartMethod === 'csv' 
 							? 'border-red-500 bg-gradient-to-br from-red-50 to-red-100 shadow-lg' 
 							: 'border-gray-200 hover:border-red-300 hover:shadow-md'
 						}`}
 						onClick={() => setRateChartMethod('csv')}
 					>
-						<div className="flex items-center space-x-4">
-							<div className={`p-3 rounded-lg ${rateChartMethod === 'csv' ? 'bg-red-500' : 'bg-gray-100'}`}>
-								<ArrowDownTrayIcon className={`w-6 h-6 ${rateChartMethod === 'csv' ? 'text-white' : 'text-gray-600'}`} />
+						<div className="flex items-center space-x-3 sm:space-x-4">
+							<div className={`p-2 sm:p-3 rounded-lg ${rateChartMethod === 'csv' ? 'bg-red-500' : 'bg-gray-100'}`}>
+								<ArrowDownTrayIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${rateChartMethod === 'csv' ? 'text-white' : 'text-gray-600'}`} />
 							</div>
 							<div>
-								<h5 className="font-semibold text-gray-800 text-lg">Upload CSV</h5>
-								<p className="text-sm text-gray-600">Upload rate chart from CSV file</p>
+								<h5 className="font-semibold text-gray-800 text-base sm:text-lg">Upload CSV</h5>
+								<p className="text-xs sm:text-sm text-gray-600">Upload rate chart from CSV file</p>
 							</div>
 						</div>
 					</div>
 
 					{/* Table Creation Option */}
 					<div 
-						className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+						className={`p-4 sm:p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
 							rateChartMethod === 'table' 
 							? 'border-red-500 bg-gradient-to-br from-red-50 to-red-100 shadow-lg' 
 							: 'border-gray-200 hover:border-red-300 hover:shadow-md'
 						}`}
 						onClick={() => setRateChartMethod('table')}
 					>
-						<div className="flex items-center space-x-4">
-							<div className={`p-3 rounded-lg ${rateChartMethod === 'table' ? 'bg-red-500' : 'bg-gray-100'}`}>
-								<DocumentChartBarIcon className={`w-6 h-6 ${rateChartMethod === 'table' ? 'text-white' : 'text-gray-600'}`} />
+						<div className="flex items-center space-x-3 sm:space-x-4">
+							<div className={`p-2 sm:p-3 rounded-lg ${rateChartMethod === 'table' ? 'bg-red-500' : 'bg-gray-100'}`}>
+								<DocumentChartBarIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${rateChartMethod === 'table' ? 'text-white' : 'text-gray-600'}`} />
 							</div>
 							<div>
-								<h5 className="font-semibold text-gray-800 text-lg">Create Table</h5>
-								<p className="text-sm text-gray-600">Manually create rate chart table</p>
+								<h5 className="font-semibold text-gray-800 text-base sm:text-lg">Create Table</h5>
+								<p className="text-xs sm:text-sm text-gray-600">Manually create rate chart table</p>
 							</div>
 						</div>
 					</div>
@@ -465,8 +465,8 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 
 			{/* CSV Upload Section */}
 			{rateChartMethod === 'csv' && (
-				<div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-					<h4 className="text-xl font-semibold text-gray-800 mb-6">CSV Upload</h4>
+				<div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm">
+					<h4 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">CSV Upload</h4>
 					
 					{/* Sample CSV Download */}
 					{/* <div className="mb-6 flex justify-center">
@@ -481,8 +481,8 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 					</div> */}
 
 					{/* Individual Partner Uploads - Accordion */}
-					<div className="space-y-4">
-						<h5 className="text-lg font-semibold text-gray-800 mb-4">Upload CSV for Each Partner</h5>
+					<div className="space-y-3 sm:space-y-4">
+						<h5 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Upload CSV for Each Partner</h5>
 						{rateChartData.map((partner) => {
 							const partnerName = partner.name;
 							const partnerData = partner;
@@ -490,20 +490,20 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 							<div key={partnerName} className="bg-white border border-gray-200 rounded-lg shadow-sm">
 								{/* Accordion Header */}
 								<div 
-									className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+									className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200 gap-2 sm:gap-0"
 									onClick={() => togglePartnerAccordion(partnerName)}
 								>
 									<div className="flex items-center">
-										<div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
-										<span className="text-lg font-medium text-gray-800">{partnerName}</span>
+										<div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
+										<span className="text-base sm:text-lg font-medium text-gray-800">{partnerName}</span>
 										{uploadedFiles[partnerName] && (
-											<span className="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+											<span className="ml-2 sm:ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full whitespace-nowrap">
 												✓ Uploaded
 											</span>
 										)}
 									</div>
 									
-									<div className="flex items-center gap-2">
+									<div className="flex items-center gap-2 ml-5 sm:ml-0">
 										{/* Download Sample CSV Button */}
 										<button
 											type="button"
@@ -511,15 +511,15 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 												e.stopPropagation();
 												downloadSampleCSV(partnerName);
 											}}
-											className="flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200 text-sm"
+											className="flex items-center px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200 text-xs sm:text-sm"
 										>
-											<ArrowDownTrayIcon className="w-4 h-4 mr-1" />
+											<ArrowDownTrayIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
 											Sample
 										</button>
 										
 										{/* Expand/Collapse Icon */}
 										<div className={`transform transition-transform duration-200 ${expandedPartners[partnerName] ? 'rotate-180' : ''}`}>
-											<svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
 											</svg>
 										</div>
@@ -528,18 +528,18 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 								
 								{/* Accordion Content */}
 								{expandedPartners[partnerName] && (
-									<div className="border-t border-gray-200 p-4">
+									<div className="border-t border-gray-200 p-3 sm:p-4">
 										{/* Success Message */}
 										{successMessages[partnerName] && (
-											<div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-												<p className="text-green-800 text-sm font-medium">
+											<div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-green-50 border border-green-200 rounded-lg">
+												<p className="text-green-800 text-xs sm:text-sm font-medium">
 													{successMessages[partnerName]}
 												</p>
 											</div>
 										)}
 										
 										{/* Upload Section */}
-										<div className="space-y-4">
+										<div className="space-y-3 sm:space-y-4">
 											<div className="relative">
 												<input
 													type="file"
@@ -554,25 +554,25 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 												/>
 												<label
 													htmlFor={`csv-upload-${partnerName}`}
-													className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer"
+													className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer text-sm sm:text-base"
 												>
-													<CloudArrowUpIcon className="w-5 h-5 mr-2" />
-													Upload CSV for {partnerName}
+													<CloudArrowUpIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+													<span className="truncate">Upload CSV for {partnerName}</span>
 												</label>
 											</div>
 											
 											{/* Uploaded File Info */}
 											{uploadedFiles[partnerName] && (
-												<div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-													<div className="flex items-center justify-between">
-														<div>
-															<p className="text-sm font-medium text-green-800">
+												<div className="p-2 sm:p-3 bg-green-50 border border-green-200 rounded-lg">
+													<div className="flex items-start sm:items-center justify-between gap-2">
+														<div className="flex-1 min-w-0">
+															<p className="text-xs sm:text-sm font-medium text-green-800 truncate">
 																📁 {uploadedFiles[partnerName].name}
 															</p>
 															<p className="text-xs text-green-600">
 																Size: {(uploadedFiles[partnerName].size / 1024).toFixed(1)} KB
 															</p>
-															<p className="text-xs text-green-600">
+															<p className="text-xs text-green-600 truncate">
 																Uploaded: {uploadedFiles[partnerName].uploadedAt}
 															</p>
 														</div>
@@ -585,7 +585,7 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 																	return newFiles;
 																});
 															}}
-															className="text-red-500 hover:text-red-700 transition-colors duration-200"
+															className="text-red-500 hover:text-red-700 transition-colors duration-200 flex-shrink-0"
 														>
 															<TrashIcon className="w-4 h-4" />
 														</button>
@@ -604,25 +604,25 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 
 			{/* Table Creation Section */}
 			{rateChartMethod === 'table' && (
-				<div className="space-y-6">
+				<div className="space-y-4 sm:space-y-6">
 
 					{/* Partners List */}
 					{rateChartData.map((partner) => {
 						const partnerName = partner.name;
 						const partnerData = partner;
 						return (
-						<div key={partnerName} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+						<div key={partnerName} className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
 							{/* Partner Header */}
-							<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-								<div className="flex flex-col sm:flex-row sm:items-center gap-4">
+							<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+								<div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
 									<div className="flex-1">
-										<div className="flex items-center gap-3">
+										<div className="flex items-center gap-2 sm:gap-3">
 											<Input
 												type="text"
 												value={partnerName}
 												disabled={true}
 												placeholder="Partner Name"
-												className="text-lg font-semibold bg-gray-100"
+												className="text-base sm:text-lg font-semibold bg-gray-100"
 												label="Partner Name"
 											/>
 											{/* <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full border border-green-200">
@@ -636,15 +636,15 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 
 							{/* Uploaded File Info */}
 							{uploadedFiles[partnerName] && (
-								<div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-									<div className="flex items-center justify-between">
-										<div className="flex items-center">
-											<div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-											<div>
-												<p className="text-sm font-medium text-green-800">
+								<div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-green-50 border border-green-200 rounded-lg">
+									<div className="flex items-start sm:items-center justify-between gap-2">
+										<div className="flex items-start sm:items-center gap-2">
+											<div className="w-2 h-2 bg-green-500 rounded-full mt-1 sm:mt-0 flex-shrink-0"></div>
+											<div className="flex-1 min-w-0">
+												<p className="text-xs sm:text-sm font-medium text-green-800 truncate">
 													Uploaded: {uploadedFiles[partnerName].name}
 												</p>
-												<p className="text-xs text-green-600">
+												<p className="text-xs text-green-600 truncate">
 													Size: {(uploadedFiles[partnerName].size / 1024).toFixed(1)} KB • 
 													Uploaded at: {uploadedFiles[partnerName].uploadedAt}
 												</p>
@@ -657,7 +657,7 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 												delete newUploadedFiles[partnerName];
 												setUploadedFiles(newUploadedFiles);
 											}}
-											className="text-green-600 hover:text-green-800 transition-colors duration-200"
+											className="text-green-600 hover:text-green-800 transition-colors duration-200 flex-shrink-0"
 										>
 											<TrashIcon className="w-4 h-4" />
 										</button>
@@ -674,81 +674,85 @@ const RateChartManager = ({ onDataChange, initialData = null }) => {
 									Default Rate Chart - Z1 to Z5 zones with default values (editable)
 								</p>
 							</div> */}
-							<div className="overflow-x-auto rounded-xl border-2 border-red-500 shadow-2xl">
-								<table className="w-full">
+							{/* Mobile: Scrollable table wrapper with hint */}
+							<div className="block sm:hidden mb-2">
+								<p className="text-xs text-gray-500 text-center">← Scroll horizontally to view all fields →</p>
+							</div>
+							<div className="overflow-x-auto rounded-lg sm:rounded-xl border-2 border-red-500 shadow-xl sm:shadow-2xl -mx-4 sm:mx-0">
+								<table className="w-full min-w-[800px]">
 									<thead className="bg-gradient-to-r from-red-500 to-red-600">
 										<tr>
-											<th className="px-6 py-4 text-left text-sm font-bold text-white border-b border-red-400">Zone</th>
-											<th className="px-6 py-4 text-left text-sm font-bold text-white border-b border-red-400">Min Value (₹)</th>
-											<th className="px-6 py-4 text-left text-sm font-bold text-white border-b border-red-400">Min Weight (gm)</th>
-											<th className="px-6 py-4 text-left text-sm font-bold text-white border-b border-red-400">ODA (%)</th>
-											<th className="px-6 py-4 text-left text-sm font-bold text-white border-b border-red-400">COD (%)</th>
-											<th className="px-6 py-4 text-left text-sm font-bold text-white border-b border-red-400">Other Charges (%)</th>
+											<th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-white border-b border-red-400 whitespace-nowrap">Zone</th>
+											<th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-white border-b border-red-400 whitespace-nowrap">Min Value (₹)</th>
+											<th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-white border-b border-red-400 whitespace-nowrap">Min Weight (gm)</th>
+											<th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-white border-b border-red-400 whitespace-nowrap">ODA (%)</th>
+											<th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-white border-b border-red-400 whitespace-nowrap">COD (%)</th>
+											<th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-white border-b border-red-400 whitespace-nowrap">Other Charges (%)</th>
 										</tr>
 									</thead>
 									<tbody>
 										{partnerData.chart.map((zoneData, zoneIndex) => (
 											<tr key={zoneIndex} className="border-b border-red-200 hover:bg-gradient-to-r hover:from-red-50 hover:to-white transition-colors duration-150">
-												<td className="px-6 py-4">
+												<td className="px-3 sm:px-6 py-3 sm:py-4">
 													<Input
 														value={zoneData.Zone}
 														disabled={true}
-														className="!border-red-300 bg-red-50"
+														className="!border-red-300 bg-red-50 text-xs sm:text-sm"
 														label="Zone"
 													/>
 												</td>
-												<td className="px-6 py-4">
+												<td className="px-3 sm:px-6 py-3 sm:py-4">
 													<Input
 														type="number"
 														value={zoneData['minValue']}
 														onChange={(e) => updateZoneData(partnerName, zoneIndex, 'minValue', parseInt(e.target.value) || 0)}
 														placeholder="200"
 														required
-														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200"
+														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200 text-xs sm:text-sm"
 														label="Min Value"
 													/>
 												</td>
-												<td className="px-6 py-4">
+												<td className="px-3 sm:px-6 py-3 sm:py-4">
 													<Input
 														type="number"
 														value={zoneData['minWeight']}
 														onChange={(e) => updateZoneData(partnerName, zoneIndex, 'minWeight', parseInt(e.target.value) || 0)}
 														placeholder="500"
 														required
-														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200"
+														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200 text-xs sm:text-sm"
 														label="Min Weight"
 													/>
 												</td>
-												<td className="px-6 py-4">
+												<td className="px-3 sm:px-6 py-3 sm:py-4">
 													<Input
 														type="number"
 														value={zoneData.ODA}
 														onChange={(e) => updateZoneData(partnerName, zoneIndex, 'ODA', parseInt(e.target.value) || 0)}
 														placeholder="10"
 														required
-														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200"
+														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200 text-xs sm:text-sm"
 														label="ODA %"
 													/>
 												</td>
-												<td className="px-6 py-4">
+												<td className="px-3 sm:px-6 py-3 sm:py-4">
 													<Input
 														type="number"
 														value={zoneData.COD}
 														onChange={(e) => updateZoneData(partnerName, zoneIndex, 'COD', parseInt(e.target.value) || 0)}
 														placeholder="20"
 														required
-														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200"
+														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200 text-xs sm:text-sm"
 														label="COD %"
 													/>
 												</td>
-												<td className="px-6 py-4">
+												<td className="px-3 sm:px-6 py-3 sm:py-4">
 													<Input
 														type="number"
 														value={zoneData['otherCharges']}
 														onChange={(e) => updateZoneData(partnerName, zoneIndex, 'otherCharges', parseInt(e.target.value) || 0)}
 														placeholder="20"
 														required
-														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200"
+														className="!border-red-300 focus:!border-red-500 hover:!border-red-400 transition-colors duration-200 text-xs sm:text-sm"
 														label="Other Charges %"
 													/>
 												</td>

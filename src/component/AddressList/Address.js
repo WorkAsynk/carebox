@@ -109,7 +109,7 @@ const Address = ({ address, onAddressDelete }) => {
 	};
 
 	return (
-		<div className='max-w-6xl mx-auto mt-5'>
+		<div className='lg:max-w-6xl max-w-[400px] mx-auto mt-5'>
 			{/* Header */}
 			<div className='mb-6 p-6'>
 				<div className='flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4'>

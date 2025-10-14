@@ -29,4 +29,5 @@ export const API_ENDPOINTS = {
   FETCH_ALL_ORDERS: '/api/order/fetchAllOrders',
   FETCH_ORDER_DETAIL: '/api/order/fetchOrderDetail',
   EDIT_ORDER: '/api/order/editOrder',
+  FETCH_ORDERS_BY_DATERANGE: '/api/order/fetchOrdersByDateRange',
 };
