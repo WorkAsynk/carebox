@@ -91,7 +91,7 @@ const CreateBag = () => {
 					order => order.status?.toLowerCase() === 'order created!' || 
 					        order.status?.toLowerCase() === 'created'
 				).map(order => ({
-					awb_number: order.lr_no || order.awb_number || order.order_no,
+					awb_number: order.awb_no || order.awb_number || order.order_no,
 					order_id: order.id || order.order_id,
 					consignee: order.receiver_address?.consignee_name || 'N/A'
 				}));
@@ -167,14 +167,16 @@ const CreateBag = () => {
 		}
 		setIsSubmitting(true);
 
-		// Generate bag number if auto-generated
-		const generatedBagNumber = bagGenerated ? generateBagNumber() : bagNumber;
+		// Generate bag number if auto-generated (only numbers)
+		let generatedBagNumber = bagGenerated ? generateBagNumber() : bagNumber;
+		// Extract only numbers from the bag AWB
+		generatedBagNumber = generatedBagNumber.replace(/\D/g, '');
 		setCreatedBagNumber(generatedBagNumber);
 
 		// Validation
 		const missing = [];
 		if (!generatedBagNumber) missing.push('Bag Number');
-		if (!destination) missing.push('Destination');
+		// if (!destination) missing.push('Destination'); // Commented out as destination field is optional
 		if (addedAwbList.length === 0) missing.push('At least one AWB Number');
 		if (!receiver?.consignee_name) missing.push('Receiver Name');
 		if (!receiver?.phone) missing.push('Receiver Phone');
@@ -190,43 +192,60 @@ const CreateBag = () => {
 		}
 
 		try {
-			// Create bag with AWB numbers
-			const bagData = {
-				bag_number: generatedBagNumber,
-				destination: destination,
-				sender_name: sender.name,
-				sender_phone: sender.phone,
-				sender_email: sender.email,
-				sender_address: sender.address,
-				sender_city: sender.city,
-				sender_state: sender.state,
-				sender_pincode: sender.pincode,
-				receiver_name: receiver.consignee_name,
-				receiver_phone: receiver.phone,
-				receiver_email: receiver.email,
-				receiver_address: receiver.address_line,
-				receiver_city: receiver.city,
-				receiver_state: receiver.state,
-				receiver_pincode: receiver.pincode,
-				created_by: user?.id || '1',
-				mf_no: mfnumber,
-				mode: mode,
-				awb_numbers: addedAwbList.map(item => item.awb_number),
-				order_ids: addedAwbList.map(item => item.order_id),
-				status: 'Created'
+			// Prepare source address (sender) - use ID if exists, otherwise create new address object
+			const sourceAddress = sender.id ? sender.id : {
+				name: sender.name,
+				phone: sender.phone,
+				email: sender.email,
+				address_line: sender.address,
+				city: sender.city,
+				state: sender.state,
+				pincode: sender.pincode,
+				country: sender.country || 'India',
+				is_sender: true
 			};
 
-			// TODO: Replace with actual bag creation endpoint
-			const url = buildApiUrl('/api/bags/create'); // Update this endpoint
-			const { data } = await axios.post(url, bagData);
+			// Prepare destination address (receiver) - use ID if exists, otherwise create new address object
+			const destinationAddress = receiver.id ? receiver.id : {
+				consignee_name: receiver.consignee_name,
+				phone: receiver.phone,
+				email: receiver.email,
+				address_line: receiver.address_line,
+				city: receiver.city,
+				state: receiver.state,
+				pincode: receiver.pincode,
+				country: receiver.country || 'India',
+				is_sender: false
+			};
+
+			// Prepare bag data according to API spec
+			const bagData = {
+				bag_awb_no: generatedBagNumber, // Only numbers
+				package_awb_numbers: addedAwbList.map(item => item.awb_number),
+				source_address_id: user?.id,
+				destination_address_id: destinationAddress,
+				staff_id: isAdmin ? user?.id : mfnumber
+			};
+
+			console.log('Submitting bag data:', bagData);
+
+			// Call the create bag API
+			const { data } = await axios.post(
+				buildApiUrl(API_ENDPOINTS.CREATE_BAG),
+				bagData
+			);
 			
-			setShowSuccess(true);
-			toast.success('Bag created successfully!');
-			
-			setTimeout(() => {
-				setShowSuccess(false);
-				navigate('/'); // Navigate to bag list or home
-			}, 1500);
+			if (data.success) {
+				setShowSuccess(true);
+				toast.success(data.message || 'Bag created successfully!');
+				
+				setTimeout(() => {
+					setShowSuccess(false);
+					navigate('/'); // Navigate to bag list or home
+				}, 1500);
+			} else {
+				toast.error(data.message || 'Failed to create bag');
+			}
 		} catch (error) {
 			console.error('Error creating bag:', error);
 			toast.error(error.response?.data?.message || 'Failed to create bag');
@@ -234,6 +253,77 @@ const CreateBag = () => {
 			setIsSubmitting(false);
 		}
 	};
+
+	// Address autofill when receiver pincode changes
+	const handleReceiverPincodeChange = async (pincode) => {
+		setReceiver(prev => ({ ...prev, pincode }));
+
+		// Only autofill when pincode is 6 digits
+		if (pincode.length === 6) {
+			try {
+				const { data } = await axios.post(
+					buildApiUrl(API_ENDPOINTS.ADDRESS_AUTOFILL),
+					{
+						name: user?.name,
+						co_name: user?.co_name,
+						mf_no: user?.mf_no,
+						pincode: pincode
+					}
+				);
+
+				if (Array.isArray(data?.addresses)) {
+					// Find receiver address matching the pincode
+					const receiverAddress = data.addresses.find(
+						addr => addr.pincode === pincode && addr.is_sender === false
+					);
+
+					if (receiverAddress) {
+						setReceiver({
+							id: receiverAddress.id,
+							consignee_name: receiverAddress.consignee_name || '',
+							phone: receiverAddress.phone || '',
+							email: receiverAddress.email || '',
+							address_line: receiverAddress.address_line || '',
+							city: receiverAddress.city || '',
+							state: receiverAddress.state || '',
+							pincode: receiverAddress.pincode || '',
+							country: receiverAddress.country || 'India'
+						});
+						toast.success('Address autofilled from saved addresses');
+					}
+				}
+			} catch (error) {
+				console.error('Error autofilling address:', error);
+			}
+		}
+	};
+
+	// Fetch addresses on component mount for autofill
+	useEffect(() => {
+		const fetchAddresses = async () => {
+			if (!user) return;
+
+			try {
+				const { data } = await axios.post(
+					buildApiUrl(API_ENDPOINTS.ADDRESS_AUTOFILL),
+					{
+						name: user?.name,
+						co_name: user?.co_name,
+						mf_no: user?.mf_no
+					}
+				);
+
+				if (Array.isArray(data?.addresses)) {
+					// Store addresses for potential use (optional)
+					console.log('Available addresses loaded:', data.addresses.length);
+				}
+			} catch (error) {
+				console.error('Error fetching addresses:', error);
+			}
+		};
+
+		fetchAddresses();
+	}, [user]);
 
 	// Populate sender data from Redux user data
 	useEffect(() => {
@@ -314,12 +404,12 @@ const CreateBag = () => {
 											<Option value="Air">Air</Option>
 											<Option value="Surface">Surface</Option>
 										</Select> */}
-										<Input 
+										{/* <Input 
 											label='Destination *' 
 											value={destination} 
 											onChange={(e) => setDestination(e.target.value)} 
 											placeholder='Enter Destination' 
-										/>
+										/> */}
 									</div>
 								</div>
 
@@ -456,9 +546,9 @@ const CreateBag = () => {
 												/>
 												<Input
 													label="Pincode"
-													placeholder="Enter Your Pincode"
+													placeholder="Enter Your Pincode (6 digits for autofill)"
 													value={receiver.pincode}
-													onChange={(e) => setReceiver({ ...receiver, pincode: e.target.value })}
+													onChange={(e) => handleReceiverPincodeChange(e.target.value)}
 												/>
 												<Input
 													label="Country"

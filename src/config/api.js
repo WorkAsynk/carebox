@@ -30,4 +30,9 @@ export const API_ENDPOINTS = {
   FETCH_ORDER_DETAIL: '/api/order/fetchOrderDetail',
   EDIT_ORDER: '/api/order/editOrder',
   FETCH_ORDERS_BY_DATERANGE: '/api/order/fetchOrdersByDateRange',
+  
+  // Bag endpoints
+  CREATE_BAG: '/api/bags/createBag',
+  FETCH_ALL_BAGS: '/api/bags/bagList',
+  DELETE_BAG: '/api/bags/deleteBag',
 };

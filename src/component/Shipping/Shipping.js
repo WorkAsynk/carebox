@@ -34,7 +34,7 @@ const Shipping = ({ order, formatAddress, packages, totalActualWeight, totalVolu
             </div>
             <div className='text-right'>
               <p className='text-sm'>Date: {new Date(order?.created_at || Date.now()).toLocaleDateString()}</p>
-              <p className='text-sm font-bold'>LR: {order?.lr_no || order?.order_no || 'N/A'}</p>
+              <p className='text-sm font-bold'>LR: {order?.awb_no || order?.order_no || 'N/A'}</p>
             </div>
           </div>
         </div>
@@ -44,7 +44,7 @@ const Shipping = ({ order, formatAddress, packages, totalActualWeight, totalVolu
           <div className='grid grid-cols-3 gap-6'>
             {/* QR Code Section */}
             <div className='col-span-1 flex flex-col items-center justify-center border-2 border-gray-300 rounded-lg p-4'>
-              <QRCode value={String(order?.lr_no || order?.order_no || id || '')} size={150} />
+              <QRCode value={String(order?.awb_no || order?.order_no || id || '')} size={150} />
               <p className='text-xs text-center mt-2 font-semibold'>Scan QR Code</p>
             </div>
 
@@ -57,7 +57,7 @@ const Shipping = ({ order, formatAddress, packages, totalActualWeight, totalVolu
 
               <div className='border-b-2 border-gray-200 pb-2'>
                 <p className='text-xs text-gray-600 font-semibold'>CONSIGNMENT NO.</p>
-                <p className='text-lg font-bold text-red-600'>{order?.lr_no || order?.order_no || 'N/A'}</p>
+                <p className='text-lg font-bold text-red-600'>{order?.awb_no || order?.order_no || 'N/A'}</p>
               </div>
 
               <div className='grid grid-cols-3 gap-2'>
@@ -131,7 +131,7 @@ const Shipping = ({ order, formatAddress, packages, totalActualWeight, totalVolu
           {/* Barcode Section */}
           {/* <div className='mt-6 border-t-2 border-gray-200 pt-4 flex justify-center'>
             <Barcode 
-              value={String(order?.lr_no || order?.order_no || id || '')} 
+              value={String(order?.awb_no || order?.order_no || id || '')} 
               width={2}
               height={60}
               displayValue={true}

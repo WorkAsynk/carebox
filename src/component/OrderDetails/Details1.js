@@ -50,7 +50,7 @@ const Details1 = ({data}) => {
 				<h3 className='text-lg font-semibold text-black mb-3'>AWB Number</h3>
 				<div className='bg-white p-3 rounded-md border-2 border-dashed border-red-200'>
 					<span className='text-2xl font-mono font-bold text-red-600 tracking-wider'>
-						{data.awb_number || data.lr_no || data.order_no || 'N/A'}
+						{data.awb_number || data.awb_no || data.order_no || 'N/A'}
 					</span>
 				</div>
 			</div>

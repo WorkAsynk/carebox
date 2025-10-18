@@ -26,6 +26,8 @@ import EditAddress from './pages/EditAddress';
 import Settings from './pages/Settings';
 import Tracker from './pages/Tracker';
 import CreateBag from './pages/CreateBag';
+import BagList from './pages/BagList';
+import AssignDeliveryBoy from './pages/AssignDeliveryBoy';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -154,6 +156,16 @@ function App() {
         <Route path="/create-bag" element={
           <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager']}>
             <CreateBag />
+          </ProtectedRoute>
+        } />
+        <Route path="/bag-list" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager']}>
+            <BagList />
+          </ProtectedRoute>
+        } />
+        <Route path="/assign-delivery-boy" element={
+          <ProtectedRoute allowedRoles={['Admin', 'Franchise', 'Operational Manager']}>
+            <AssignDeliveryBoy />
           </ProtectedRoute>
         } />
         

@@ -290,6 +290,8 @@ const OrderForm = () => {
 		}
 	};
 
+	console.log(user);
+
 
 
 	const handleSubmit = async (e) => {
@@ -369,13 +371,14 @@ const OrderForm = () => {
 				ewaybill: ewaybillValue,
 				order_id: orderId,
 				order_no: generatedAWB,
-				lr_no: generatedAWB,
+				
 				created_by: user?.id || '1',
 				agent_id: isAdmin ? user?.id : mfInteger,
 				insurance_type: 'owners risk',
-				forwarding_no: 'sdsa',
+				// forwarding_no: 'sdsa',
 				carrier: shippingPartner,
 				package_data: [{
+					awb_no: generatedAWB,
 					length: toNumber2(packageData.length),
 					width: toNumber2(packageData.width),
 					height: toNumber2(packageData.height),
@@ -492,7 +495,7 @@ const OrderForm = () => {
 									value={shippingPartner}
 									onChange={(val) => setShippingPartner(val)}
 									label="Forwarding Partner">
-									<Option value="Self">Self</Option>
+									<Option value="self">Self</Option>
 									<Option value="Bluedart">Bluedart</Option>
 									<Option value="DTDC">DTDC</Option>
 									<Option value="Shree Maruthi">Shree Maruthi</Option>

@@ -21,7 +21,7 @@ import {
 import logo from "../../assets/logo/logocarebox.png";
 import logoicon from "../../assets/logo/logocareboxicon.png";
 import { Link, useNavigate } from 'react-router-dom';
-import { FaAddressBook, FaCaretDown, FaList, FaUser, FaUserAlt } from 'react-icons/fa';
+import { FaAddressBook, FaCaretDown, FaList, FaTruck, FaUser, FaUserAlt } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/actions/authActions';
 import { FaBox, FaCaretUp } from 'react-icons/fa6';
@@ -101,7 +101,16 @@ const menuItems = [
 		icon: <FaBox className="w-5 h-5" />,
 		allowedRoles: ['Admin', 'Franchise', 'Operational Manager'],
 		children: [
-			{ label: 'Create Bag', icon: <IoIosCreate className='h-5 w-5' />, href: '/create-bag', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] }
+			{ label: 'Create Bag', icon: <IoIosCreate className='h-5 w-5' />, href: '/create-bag', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] },
+			{ label: 'Bag List', icon: <FaBox className='h-5 w-5' />, href: '/bag-list', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] }
+		]
+	},
+	{
+		label: 'Delivery Boy', 
+		icon: <FaTruck className="w-5 h-5" />,
+		allowedRoles: ['Admin', 'Franchise', 'Operational Manager'],
+		children: [
+			{ label: 'Assign Delivery Boy', icon: <FaTruck className='h-5 w-5' />, href: '/assign-delivery-boy', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] }
 		]
 	},
 	{ 

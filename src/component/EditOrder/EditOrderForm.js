@@ -46,7 +46,7 @@ const EditOrderForm = ({ data, loading, error }) => {
     useEffect(() => {
         if (!data) return;
         setOrderID(data?.order_id || '');
-        setAwbNumber(data?.lr_no || data?.order_no || '');
+        setAwbNumber(data?.awb_no || data?.order_no || '');
         const incomingMode = (data?.mode || '').toString().toLowerCase();
         setMode(incomingMode === 'air' ? 'Air' : (incomingMode === 'surface' ? 'Surface' : ''));
         setmfnumber(data?.mf_no || data?.mfnumber || '');
@@ -301,7 +301,7 @@ const EditOrderForm = ({ data, loading, error }) => {
                 ewaybill: ewaybillValue,
                 order_id: orderId,
                 order_no: generatedAWB,
-                lr_no: generatedAWB,
+                awb_no: generatedAWB,
                 created_by: user?.id || '1',
                 agent_id: user?.id || '1',
                 insurance_type: 'owners risk',

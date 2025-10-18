@@ -50,7 +50,7 @@ const ShipperCopy = ({
           </div>
           <div className="col-span-1 py-4 px-2 border-r-[1px] border-gray-600  flex items-center justify-center">
             <Barcode
-              value={String(order?.lr_no || order?.order_no || id || "")}
+              value={String(order?.awb_no || order?.order_no || id || "")}
               height={60}
               className="w-[150px]"
             />
@@ -133,7 +133,7 @@ const ShipperCopy = ({
             </div>
             <div className="border-b-[1px] py-3 px-3 text-center border-gray-600">
               <p className="text-[1.2rem] font-[600]">
-                {order?.lr_no || order?.order_no || "N/A"}
+                {order?.awb_no || order?.order_no || "N/A"}
               </p>
             </div>
             <div className="border-b-[1px] font-[600]  text-center  text-[0.8rem] border-gray-600">

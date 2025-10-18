@@ -103,7 +103,7 @@ const FranchiseBillingInfo = () => {
           return {
             id: order?.id || idx,
             mfNumber: `MF-${mfPadded}`,
-            awbNumber: order?.lr_no || order?.order_no || '',
+            awbNumber: order?.awb_no || order?.order_no || '',
             senderLocationPincode: senderPin,
             receiverLocationPincode: receiverPin,
             totalParcel: Array.isArray(order?.package_data) ? order.package_data.length : 1,

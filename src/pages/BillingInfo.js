@@ -84,7 +84,7 @@ const BillingInfo = () => {
         const mapped = data.orders.map((order, idx) => ({
           id: order?.id || idx,
           mfNumber: `MF-${String(order?.agent_id || mfInteger || '').toString().padStart(3, '0')}`,
-          awbNumber: order?.lr_no || order?.order_no || '',
+          awbNumber: order?.awb_no || order?.order_no || '',
           senderLocationPincode: order?.sender_address?.pincode || order?.sender_pincode || '',
           receiverLocationPincode: order?.receiver_address?.pincode || order?.receiver_pincode || '',
           totalParcel: Array.isArray(order?.package_data) ? order.package_data.length : 1,

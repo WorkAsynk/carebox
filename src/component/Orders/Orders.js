@@ -72,7 +72,7 @@ const Orders = ({orders, handleDeleteOrder}) => {
 		// Debug: Log the status to see what we're getting
 		console.log('Filtering order:', {
 			id: order?.id,
-			lr_no: order?.lr_no,
+			awb_no: order?.awb_no,
 			order_no: order?.order_no,
 			status: order?.status,
 			activeTab: activeTab
@@ -94,7 +94,7 @@ const Orders = ({orders, handleDeleteOrder}) => {
 		
 		const matchesSearch = !searchTerm || 
 			order?.order_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order?.lr_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order?.awb_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 			order?.sender_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 			order?.receiver_name?.toLowerCase().includes(searchTerm.toLowerCase());
 		
@@ -111,7 +111,7 @@ const Orders = ({orders, handleDeleteOrder}) => {
 	const csvHeaders = useMemo(() => {
 		const baseHeaders = [
 			{ label: "AWB No", key: "awb_no" },
-			{ label: "LR No", key: "lr_no" },
+			{ label: "LR No", key: "awb_no" },
 			{ label: "Order ID", key: "order_id" },
 			{ label: "Order Date", key: "order_date" },
 			{ label: "Sender Name", key: "sender_name" },
@@ -175,8 +175,8 @@ const Orders = ({orders, handleDeleteOrder}) => {
 			};
 
 			const baseData = {
-				awb_no: formatNumber(order.lr_no || order.awb_no),
-				lr_no: formatNumber(order.lr_no),
+				awb_no: formatNumber(order.awb_no || order.awb_no),
+				awb_no: formatNumber(order.awb_no),
 				order_id: order.order_id || order.order_no || order.id || 'N/A',
 				order_date: formatDateOnly(order.created_at),
 				sender_name: order.sender_name || order.sender?.name || 'N/A',
@@ -382,7 +382,7 @@ const Orders = ({orders, handleDeleteOrder}) => {
                     >
                         <Link to={`/order-details/${order.id}`} className="group/link">
                             <div className="text-gray-900 font-semibold hover:text-red-600 transition-colors group-hover/link:underline">
-                                {order.lr_no || order.order_no || 'N/A'}
+                                {order.awb_no || order.order_no || 'N/A'}
                             </div>
                         </Link>
                         <div className="text-gray-700 flex items-center">
