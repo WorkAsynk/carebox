@@ -13,12 +13,21 @@ const BagListArea = ({ bags, handleDeleteBag }) => {
 	const [page, setPage] = useState(1);
 	const bagsPerPage = 10;
 	
-	const filteredBags = bags?.filter(bag => activeTab === 'All' || bag?.status?.toLowerCase() === activeTab.toLowerCase())
+	const filteredBags = bags?.filter(bag => {
+		if (activeTab === 'All') return true;
+		
+		// Map the delivered boolean to status
+		const bagStatus = bag.delivered ? 'Delivered' : 'Pending';
+		return bagStatus.toLowerCase() === activeTab.toLowerCase();
+	})
 		?.filter(bag => 
+			bag?.awb_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			bag?.bag_awb_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 			bag?.bagNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			bag?.mfNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			bag?.destination?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			bag?.senderName?.toLowerCase().includes(searchTerm.toLowerCase())
+			bag?.destination_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			bag?.destination_city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			bag?.source_address?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			bag?.source_address?.city?.toLowerCase().includes(searchTerm.toLowerCase())
 		);
 
 	const totalPages = Math.ceil(filteredBags.length / bagsPerPage);
@@ -27,31 +36,26 @@ const BagListArea = ({ bags, handleDeleteBag }) => {
 	// Prepare CSV headers
 	const csvHeaders = useMemo(() => [
 		{ label: "Bag Number", key: "bagNumber" },
-		{ label: "MF Number", key: "mfNumber" },
-		{ label: "Mode", key: "mode" },
-		{ label: "Destination", key: "destination" },
-		{ label: "AWB Count", key: "awbCount" },
-		{ label: "Status", key: "status" },
+		{ label: "AWB Numbers", key: "awbNumbers" },
+		{ label: "Sender", key: "senderName" },
+		{ label: "Receiver", key: "receiverName" },
 		{ label: "Created Date", key: "createdDate" },
-		{ label: "Sender Name", key: "senderName" },
-		{ label: "Receiver Location", key: "receiverLocation" }
+		{ label: "Created Time", key: "createdTime" },
 	], []);
 
 	// Prepare CSV data from bags list
 	const csvData = useMemo(() => {
 		return bags.map(bag => {
-			const formatDate = (date) => date ? new Date(date).toLocaleString() : 'N/A';
+			const formatDate = (date) => date ? new Date(date).toLocaleDateString() : 'N/A';
+			const formatTime = (date) => date ? new Date(date).toLocaleTimeString() : 'N/A';
 			
 			return {
-				bagNumber: bag.bagNumber || 'N/A',
-				mfNumber: bag.mfNumber || 'N/A',
-				mode: bag.mode || 'N/A',
-				destination: bag.destination || 'N/A',
-				awbCount: bag.awbCount || 'N/A',
-				status: bag.status || 'N/A',
-				createdDate: formatDate(bag.createdDate),
-				senderName: bag.senderName || 'N/A',
-				receiverLocation: bag.receiverLocation || 'N/A'
+				bagNumber: bag.awb_no || bag.bag_awb_no || bag.bagNumber || 'N/A',
+				awbNumbers: Array.isArray(bag.package_awb_nos) ? bag.package_awb_nos.join(', ') : 'N/A',
+				senderName: bag.source_address?.name || bag.source_address?.city || 'N/A',
+				receiverName: bag.destination_name || 'N/A',
+				createdDate: formatDate(bag.created_at),
+				createdTime: formatTime(bag.created_at),
 			};
 		});
 	}, [bags]);
@@ -151,16 +155,16 @@ const BagListArea = ({ bags, handleDeleteBag }) => {
 			<div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
 				<div className="overflow-x-auto">
 					{/* Header Row */}
-					<div className="grid grid-cols-8 text-left bg-gradient-to-r from-gray-800 to-gray-900 text-white font-semibold px-6 py-4 text-sm min-w-[900px]">
+					<div className="grid grid-cols-6 text-left bg-gradient-to-r from-gray-800 to-gray-900 text-white font-semibold px-6 py-4 text-sm min-w-[1100px]">
 						<div className="flex items-center gap-2">
-							<span>Bag No</span>
+							<span>AWB Number</span>
 						</div>
-						<div>Created Date</div>
 						<div>Sender</div>
-						<div>Destination</div>
-						<div>AWB Count</div>
-						<div>Mode</div>
-						<div>Status</div>
+						<div>Receiver</div>
+						<div>Created At</div>
+						{/* <div>Created Time</div> */}
+						<div>AWB List</div>
+						{/* <div>Status</div> */}
 						<div>Actions</div>
 					</div>
 
@@ -178,57 +182,80 @@ const BagListArea = ({ bags, handleDeleteBag }) => {
 							</div>
 						</div>
 					) : (
-						paginatedBags.map((bag, idx) => (
-							<div
-								key={idx}
-								className="grid grid-cols-8 text-sm px-6 py-4 border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 transition-all duration-200 min-w-[900px] group"
-							>
-								<div className="text-gray-900 font-semibold flex items-center">
-									{bag.bagNumber}
-								</div>
-								<div className="text-gray-700 flex items-center">
-									{bag.createdDate || '-'}
-								</div>
-								<div className="text-gray-700 flex items-center">
-									{bag.senderName || '-'}
-								</div>
-								<div className="text-gray-700 flex items-center">
-									{bag.destination || '-'}
-								</div>
-								<div className="text-gray-700 flex items-center">
-									{bag.awbCount || '-'}
-								</div>
-								<div className="text-gray-700 flex items-center">
-									<span className={`px-2 py-1 rounded text-xs font-medium ${
-										bag.mode === 'Air' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-									}`}>
-										{bag.mode || '-'}
-									</span>
-								</div>
-								<div className="flex items-center">
-									<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(bag.status)}`}>
-										{bag.status || '-'}
-									</span>
-								</div>
-								<div className="flex items-center gap-2">
-									<Link to={`/edit-bag/${bag.id}`}>
-										<button 
-											className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"
-											title="Edit Bag"
+						paginatedBags.map((bag, idx) => {
+							const formatDate = (date) => date ? new Date(date).toLocaleDateString() : '-';
+							const formatTime = (date) => date ? new Date(date).toLocaleTimeString() : '-';
+							const bagNumber = bag.awb_no || bag.bag_awb_no || bag.bagNumber || '-';
+							const senderName = bag.source_address?.name || bag.source_address?.city || '-';
+							const receiverName = bag.destination_city || '-';
+							const awbList = Array.isArray(bag.package_awb_nos) ? bag.package_awb_nos : [];
+
+
+							return (
+								<div
+									key={idx}
+									className="grid grid-cols-6 text-sm px-6 py-4 border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 transition-all duration-200 min-w-[1100px] group"
+								>
+									<div className="text-gray-900 font-semibold flex items-center">
+										<Link 
+											to={`/bag-details/${bagNumber}`}
+											className=" hover:text-blue-800 hover:underline cursor-pointer"
 										>
-											<PencilIcon className="w-4 h-4" />
+											{bagNumber}
+										</Link>
+									</div>
+									<div className="text-gray-700 flex items-center">
+										{senderName}
+									</div>
+									<div className="text-gray-700 flex items-center">
+										{receiverName}
+									</div>
+									<div className="text-gray-700 flex col-span-1 items-center">
+										{formatDate(bag.created_at)} <br /> {formatTime(bag.created_at)}
+									</div>
+									<div className="text-gray-700 flex items-center">
+										{awbList.length > 0 ? (
+											<div className="max-w-40">
+												<div className="space-y-1">
+													{awbList.slice(0, 3).map((awb, idx) => (
+														<div key={idx} className="block break-all">
+															{awb}
+														</div>
+													))}
+													{awbList.length > 3 && (
+														<div className="text-gray-500 text-xs">
+															+{awbList.length - 3} more
+														</div>
+													)}
+												</div>
+											</div>
+										) : '-'}
+									</div>
+									{/* <div className="flex items-center">
+										<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(bagStatus)}`}>
+											{bagStatus}
+										</span>
+									</div> */}
+									<div className="flex items-center gap-2">
+										<Link to={`/edit-bag/${bag.id}`}>
+											<button 
+												className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"
+												title="Edit Bag"
+											>
+												<PencilIcon className="w-4 h-4" />
+											</button>
+										</Link>
+										<button 
+											onClick={() => handleDeleteBag(bag)}
+											className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110"
+											title="Delete Bag"
+										>
+											<TrashIcon className="w-4 h-4" />
 										</button>
-									</Link>
-									<button 
-										onClick={() => handleDeleteBag(bag.id)}
-										className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110"
-										title="Delete Bag"
-									>
-										<TrashIcon className="w-4 h-4" />
-									</button>
+									</div>
 								</div>
-							</div>
-						))
+							);
+						})
 					)}
 				</div>
 			</div>

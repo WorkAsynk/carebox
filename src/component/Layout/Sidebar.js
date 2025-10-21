@@ -105,14 +105,14 @@ const menuItems = [
 			{ label: 'Bag List', icon: <FaBox className='h-5 w-5' />, href: '/bag-list', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] }
 		]
 	},
-	{
-		label: 'Delivery Boy', 
-		icon: <FaTruck className="w-5 h-5" />,
-		allowedRoles: ['Admin', 'Franchise', 'Operational Manager'],
-		children: [
-			{ label: 'Assign Delivery Boy', icon: <FaTruck className='h-5 w-5' />, href: '/assign-delivery-boy', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] }
-		]
-	},
+	// {
+	// 	label: 'Delivery Boy', 
+	// 	icon: <FaTruck className="w-5 h-5" />,
+	// 	allowedRoles: ['Admin', 'Franchise', 'Operational Manager'],
+	// 	children: [
+	// 		{ label: 'Assign Delivery Boy', icon: <FaTruck className='h-5 w-5' />, href: '/assign-delivery-boy', allowedRoles: ['Admin', 'Franchise', 'Operational Manager'] }
+	// 	]
+	// },
 	{ 
 		label: 'Settings', 
 		href: '/settings', 

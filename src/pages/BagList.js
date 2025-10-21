@@ -15,9 +15,27 @@ const BagList = () => {
 		const fetchBags = async () => {
 			try {
 				const res = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_BAGS));
-				// Filter bags where is_delete is false (if applicable)
-				const activeBags = (res.data.bags || res.data || []).filter(bag => bag?.is_deleted === false || bag?.is_deleted === undefined);
-				setBags(activeBags);
+				console.log('API Response:', res.data);
+				
+				// Handle the actual API response structure - looking for bagList property
+				let bagsData = [];
+				
+				if (res.data.bagList && Array.isArray(res.data.bagList)) {
+					// If response has bagList property (from your JSON structure)
+					bagsData = res.data.bagList;
+				} else if (res.data.baglist && Array.isArray(res.data.baglist)) {
+					// Fallback for baglist property
+					bagsData = res.data.baglist;
+				} else if (res.data.bags && Array.isArray(res.data.bags)) {
+					// Fallback for bags property
+					bagsData = res.data.bags;
+				} else if (Array.isArray(res.data)) {
+					// If response is directly an array
+					bagsData = res.data;
+				}
+
+				// console.log('Extracted bagsData:', bagsData);
+				setBags(bagsData);
 			} catch (error) {
 				console.error('Error fetching bags:', error);
 			}
@@ -26,21 +44,41 @@ const BagList = () => {
 	}, []);
 	console.log("bags",bags)
 
-	const handleDeleteBag = async (bag_id) => {
+	const handleDeleteBag = async (bag) => {
 		try {
 			setShowOverlay(true);
 			setOverlayStatus('loading');
-			await axios.post(buildApiUrl(API_ENDPOINTS.DELETE_BAG), { 
-				bag_id  
+			
+			// Use awb_no instead of bag_id as per API specification
+			const awb_no = bag.awb_no || bag.bag_awb_no || bag.bagNumber;
+			
+			if (!awb_no) {
+				throw new Error('AWB number not found for this bag');
+			}
+
+			// Call DELETE API with awb_no in body as per specification
+			const response = await axios.delete(buildApiUrl(API_ENDPOINTS.DELETE_BAG), {
+				data: { awb_no: awb_no }
 			});
-			setBags(bags.filter(bag => bag.id !== bag_id));
-			setOverlayStatus('success');
-			setTimeout(() => {
-				setShowOverlay(false);
-			}, 800);
+			
+			if (response.data.success) {
+				setBags(bags.filter(b => b.id !== bag.id));
+				setOverlayStatus('success');
+				setTimeout(() => {
+					setShowOverlay(false);
+				}, 800);
+			} else {
+				throw new Error(response.data.message || 'Failed to delete bag');
+			}
 		} catch (error) {
 			console.error('Error deleting bag:', error);
 			setShowOverlay(false);
+			// You might want to show an error toast here
+			if (error.response?.status === 404) {
+				console.error('Bag not found');
+			} else if (error.response?.status === 400) {
+				console.error('Missing awb_no');
+			}
 		}
 	};
 

@@ -241,7 +241,7 @@ const CreateBag = () => {
 				
 				setTimeout(() => {
 					setShowSuccess(false);
-					navigate('/'); // Navigate to bag list or home
+					navigate('/bag-list'); // Navigate to bag list
 				}, 1500);
 			} else {
 				toast.error(data.message || 'Failed to create bag');
@@ -662,7 +662,7 @@ const CreateBag = () => {
 
 						{/* Footer Buttons */}
 						<div className="flex justify-between items-center mt-10">
-							<Link to="/">
+							<Link to="/bag-list">
 								<button className="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">
 									Cancel
 								</button>
