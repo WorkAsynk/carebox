@@ -8,7 +8,7 @@ import axios from 'axios';
 import { buildApiUrl, API_ENDPOINTS } from '../../config/api';
 import { CSVLink } from 'react-csv';
 
-const Address = ({ address, onAddressDelete }) => {
+const Address = ({ address, onAddressDelete, loading = false }) => {
 	const [searchTerm, setSearchTerm] = useState('');
 	const [tabs] = useState(['All', 'Sender', 'Receiver']);
 	const [activeTab, setActiveTab] = useState('All');
@@ -207,7 +207,14 @@ const Address = ({ address, onAddressDelete }) => {
 					</div>
 
 					{/* Data Rows */}
-					{paginatedUsers.length === 0 ? (
+					{loading ? (
+						<div className="text-center py-12 text-gray-500">
+							<div className="inline-flex items-center gap-2">
+								<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
+								Loading addresses...
+							</div>
+						</div>
+					) : paginatedUsers.length === 0 ? (
 						<div className="text-center py-12 text-gray-500">
 							<div className="flex flex-col items-center gap-3">
 								<div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
@@ -254,7 +261,7 @@ const Address = ({ address, onAddressDelete }) => {
 										user?.is_sender === false 
 											? 'bg-green-100 text-green-800 border border-green-200'
 											: 'bg-blue-100 text-blue-800 border border-blue-200'
-									}`}>
+									}` }>
 										<div className={`w-2 h-2 rounded-full mr-2 ${
 											user?.is_sender === false ? 'bg-green-500' : 'bg-blue-500'
 										}`}></div>
@@ -271,9 +278,9 @@ const Address = ({ address, onAddressDelete }) => {
 										</button>
 									</Link>
 									<button 
-										className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110"
 										title="Delete Address"
 										onClick={() => handleDeleteClick(user)}
+										className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110"
 									>
 										<TrashIcon className="w-4 h-4" />
 									</button>

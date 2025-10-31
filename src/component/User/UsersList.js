@@ -6,9 +6,9 @@ import Pagination from '../Layout/Pagination/Pagination';
 import { TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { CSVLink } from 'react-csv';
 
-const UsersList = ({ users, handleDeleteUser }) => {
+const UsersList = ({ users, handleDeleteUser, loading = false }) => {
 	const [searchTerm, setSearchTerm] = useState('');
-	const [tabs] = useState(['All', 'Admin', 'Operation Manager', 'Developer', 'Client', 'Franchise']);
+	const [tabs] = useState(['All', 'Admin', 'Operation Manager', 'Developer', 'Client', 'Franchise','Delivery Boy']);
 	const [activeTab, setActiveTab] = useState('All');
 	const [page, setPage] = useState(1);
 	const usersPerPage = 10;
@@ -55,7 +55,7 @@ const UsersList = ({ users, handleDeleteUser }) => {
 				<div className='flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4'>
 					{/* Left Section - Navigation and Title */}
 					<div className='flex lg:items-center justify-start lg:justify-between gap-4'>
-						<Link to={"/"}>
+						<Link to={'/'}>
 							<button className='group flex items-center justify-center w-10 h-10 border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 shadow-sm'>
 								<FaArrowLeft className='text-gray-600 group-hover:text-gray-800 transition-colors' />
 							</button>
@@ -148,7 +148,14 @@ const UsersList = ({ users, handleDeleteUser }) => {
 					</div>
 
 					{/* Data Rows */}
-					{paginatedUsers.length === 0 ? (
+					{loading ? (
+						<div className="text-center py-12 text-gray-500">
+							<div className="inline-flex items-center gap-2">
+								<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
+								Loading users...
+							</div>
+						</div>
+					) : paginatedUsers.length === 0 ? (
 						<div className="text-center py-12 text-gray-500">
 							<div className="flex flex-col items-center gap-3">
 								<div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
@@ -194,7 +201,7 @@ const UsersList = ({ users, handleDeleteUser }) => {
 										user.role?.toLowerCase() === 'developer' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
 										user.role?.toLowerCase() === 'client' ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' :
 										'bg-gray-100 text-gray-800 border border-gray-200'
-									}`}>
+									}` }>
 										<div className={`w-2 h-2 rounded-full mr-2 ${
 											user.role?.toLowerCase() === 'admin' ? 'bg-purple-500' :
 											user.role?.toLowerCase() === 'franchise' ? 'bg-blue-500' :

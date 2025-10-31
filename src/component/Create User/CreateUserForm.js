@@ -130,6 +130,7 @@ const CreateUserForm = () => {
 							<Option value="Operation Manager">Operation Manager</Option>
 							<Option value="Franchise">Franchise</Option>
 							<Option value="Accountant">Accountant</Option>
+							<Option value="Delivery Boy">Delivery Boy</Option>
 						</Select>
 					</div>
 

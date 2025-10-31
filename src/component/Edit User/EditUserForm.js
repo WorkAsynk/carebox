@@ -882,6 +882,7 @@ const EditUserForm = () => {
 									<Option value="Client">Client</Option>
 									<Option value="Operation Manager">Operation Manager</Option>
 									<Option value="Franchise">Franchise</Option>
+									<Option value="Delivery Boy">Delivery Boy</Option>
 								</Select>
 							</div>
 

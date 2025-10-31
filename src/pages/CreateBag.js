@@ -161,6 +161,10 @@ const CreateBag = () => {
 		toast.info('AWB number removed');
 	};
 
+		// Extract integer from MF number (remove non-digits like 'MF-')
+		
+		const mfInteger = extractMfInteger(user?.mf_no);
+
 	const handleSubmit = async (e) => {
 		if (e && typeof e.preventDefault === 'function') {
 			e.preventDefault();
@@ -224,7 +228,7 @@ const CreateBag = () => {
 				package_awb_numbers: addedAwbList.map(item => item.awb_number),
 				source_address_id: user?.id,
 				destination_address_id: destinationAddress,
-				staff_id: isAdmin ? user?.id : mfnumber
+				staff_id: isAdmin ? user?.id : mfInteger
 			};
 
 			console.log('Submitting bag data:', bagData);

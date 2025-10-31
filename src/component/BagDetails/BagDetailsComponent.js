@@ -17,6 +17,8 @@ const BagDetailsComponent = ({ data, loading, error }) => {
   if (error) return <div className="p-6 text-red-600">{error}</div>
   if (!data) return <div className="p-6">No details available.</div>
 
+  const bagNumber = data?.awb_no || data?.bag_awb_no || data?.bagNumber || ''
+
   return (
    <>
     <div className='max-w-[1200px] mx-auto'>
@@ -30,7 +32,7 @@ const BagDetailsComponent = ({ data, loading, error }) => {
 
         {/* Action buttons aligned right */}
         <div className='ml-auto flex items-center gap-3'>
-          <Link to={`/shipping-label/${data?.id || data?.bag_id || ''}`}>
+          <Link to={`/bag-shipping-label/${bagNumber}`}>
             <button className='px-4 py-2 text-sm bg-gradient-to-r from-gray-800 to-black text-white rounded-lg hover:from-gray-900 hover:to-gray-800 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2'>
               <FaTag className='text-white' />
               <span className='font-medium'>Shipping Label</span>

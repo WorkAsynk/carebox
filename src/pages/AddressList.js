@@ -7,16 +7,20 @@ import { buildApiUrl, API_ENDPOINTS } from '../config/api'
 
 const AddressList = () => {
 	const [address, setaddress] = useState([])
+	const [isLoading, setIsLoading] = useState(true)
 	
 	useEffect(() => {
 		const fetchAddress = async () => {
 			try {
+				setIsLoading(true)
 				const res = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_ADDRESSES));
 				// Filter addresses where is_deleted is false
 				const activeAddresses = (res.data.addresses || []).filter(address => address?.is_deleted === false);
 				setaddress(activeAddresses);
 			} catch (error) {
 				console.error('Error fetching addresses:', error);
+			} finally {
+				setIsLoading(false)
 			}
 		};
 		fetchAddress();
@@ -37,7 +41,7 @@ const AddressList = () => {
 			<div className='flex-1'>
 				<Topbar />
 				<div className="lg:p-6">
-					<Address address={address} onAddressDelete={handleAddressDelete} />
+					<Address address={address} onAddressDelete={handleAddressDelete} loading={isLoading} />
 				</div>
 			</div>
 		</div>

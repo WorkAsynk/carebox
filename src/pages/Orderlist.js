@@ -11,6 +11,7 @@ const Orderlist = () => {
 
     const { user } = useSelector((state) => state.auth);
     const [orders, setOrders] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [showOverlay, setShowOverlay] = useState(false);
     const [overlayStatus, setOverlayStatus] = useState('loading'); // 'loading' | 'success'
 
@@ -22,6 +23,7 @@ const Orderlist = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
+                setIsLoading(true);
                 const isFranchise = user?.role === ROLES.FRANCHISE;
                 const payload = {
                     type: isFranchise ? 'franchise' : 'admin',
@@ -41,6 +43,8 @@ const Orderlist = () => {
                 }
             } catch (error) {
                 console.error('Error fetching orders:', error);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchOrders();
@@ -69,7 +73,7 @@ const Orderlist = () => {
             <Sidebar />
             <div className='flex-1'>
                 <Topbar />
-                <Orders orders={orders} handleDeleteOrder={handleDeleteOrder} />
+                <Orders orders={orders} handleDeleteOrder={handleDeleteOrder} loading={isLoading} />
             </div>
 
             {showOverlay && (

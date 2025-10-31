@@ -8,12 +8,14 @@ import { CheckCircleIcon } from '@heroicons/react/24/solid';
 
 const BagList = () => {
 	const [bags, setBags] = useState([]);
+	const [isLoading, setIsLoading] = useState(true);
 	const [showOverlay, setShowOverlay] = useState(false);
 	const [overlayStatus, setOverlayStatus] = useState('loading'); // 'loading' | 'success'
 
 	useEffect(() => {
 		const fetchBags = async () => {
 			try {
+				setIsLoading(true);
 				const res = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_BAGS));
 				console.log('API Response:', res.data);
 				
@@ -38,6 +40,8 @@ const BagList = () => {
 				setBags(bagsData);
 			} catch (error) {
 				console.error('Error fetching bags:', error);
+			} finally {
+				setIsLoading(false);
 			}
 		};
 		fetchBags();
@@ -89,7 +93,7 @@ const BagList = () => {
 			<div className='flex-1'>
 				<Topbar />
 				<div className="p-6">
-					<BagListArea bags={bags} handleDeleteBag={handleDeleteBag} />
+					<BagListArea bags={bags} handleDeleteBag={handleDeleteBag} loading={isLoading} />
 				</div>
 			</div>
 

@@ -6,7 +6,7 @@ import Pagination from '../Layout/Pagination/Pagination';
 import { TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { CSVLink } from 'react-csv';
 
-const BagListArea = ({ bags, handleDeleteBag }) => {
+const BagListArea = ({ bags, handleDeleteBag, loading = false }) => {
 	const [searchTerm, setSearchTerm] = useState('');
 	const [tabs] = useState(['All', 'In Transit', 'Delivered', 'Pending']);
 	const [activeTab, setActiveTab] = useState('All');
@@ -169,7 +169,14 @@ const BagListArea = ({ bags, handleDeleteBag }) => {
 					</div>
 
 					{/* Data Rows */}
-					{paginatedBags.length === 0 ? (
+					{loading ? (
+						<div className="text-center py-12 text-gray-500">
+							<div className="inline-flex items-center gap-2">
+								<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
+								Loading bags...
+							</div>
+						</div>
+					) : paginatedBags.length === 0 ? (
 						<div className="text-center py-12 text-gray-500">
 							<div className="flex flex-col items-center gap-3">
 								<div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
@@ -254,8 +261,8 @@ const BagListArea = ({ bags, handleDeleteBag }) => {
 										</button>
 									</div>
 								</div>
-							);
-						})
+						);
+					})
 					)}
 				</div>
 			</div>

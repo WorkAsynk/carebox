@@ -10,18 +10,22 @@ import { CheckCircleIcon } from '@heroicons/react/24/solid';
 
 const Users = () => {
 	const [users, setUsers] = useState([]);
+	const [isLoading, setIsLoading] = useState(true);
 	const [showOverlay, setShowOverlay] = useState(false);
 	const [overlayStatus, setOverlayStatus] = useState('loading'); // 'loading' | 'success'
 
 	useEffect(() => {
 		const fetchUsers = async () => {
 			try {
+				setIsLoading(true);
 				const res = await axios.get(buildApiUrl(API_ENDPOINTS.FETCH_ALL_USERS));
 				// Filter users where is_delete is false
 				const activeUsers = (res.data.user || []).filter(user => user?.is_deleted === false);
 				setUsers(activeUsers);
 			} catch (error) {
 				console.error('Error fetching users:', error);
+			} finally {
+				setIsLoading(false);
 			}
 		};
 		fetchUsers();
@@ -53,7 +57,7 @@ const Users = () => {
 			<div className='flex-1'>
 				<Topbar />
 				<div className="p-6">
-					<UsersList users={users} handleDeleteUser={handleDeleteUser} />
+					<UsersList users={users} handleDeleteUser={handleDeleteUser} loading={isLoading} />
 				</div>
 			</div>
 

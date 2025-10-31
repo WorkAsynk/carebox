@@ -55,6 +55,8 @@ const Tracker = () => {
             'Order Created': 'created',
             'Created': 'created',
             'Order Shipped': 'shipped',
+            'Package Shipped': 'shipped',
+            'Package Shipped!': 'shipped',
             'Shipped': 'shipped',
             'Order In Transit': 'transit',
             'In Transit': 'transit',
@@ -136,8 +138,13 @@ const Tracker = () => {
                     const completedStage = completedStagesMap[stage.key];
                     
                     if (completedStage) {
+                        // Use the actual status name from API for shipped stage, otherwise use stage name
+                        const displayName = (stage.key === 'shipped' && completedStage.remarks) 
+                            ? completedStage.remarks 
+                            : stage.name;
+                        
                         return {
-                            name: stage.name,
+                            name: displayName,
                             date: completedStage.date,
                             time: completedStage.time,
                             location: completedStage.location,

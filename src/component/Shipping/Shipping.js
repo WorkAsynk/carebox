@@ -41,15 +41,18 @@ const Shipping = ({ order, formatAddress, packages, totalActualWeight, totalVolu
 
         {/* Main Content */}
         <div className='p-6 bg-white'>
-          <div className='grid grid-cols-3 gap-6'>
-            {/* QR Code Section */}
-            <div className='col-span-1 flex flex-col items-center justify-center border-2 border-gray-300 rounded-lg p-4'>
-              <QRCode value={String(order?.awb_no || order?.order_no || id || '')} size={150} />
+          <div className='flex gap-6'>
+            {/* Left Side - QR Code */}
+            <div className='w-32 flex flex-col items-center justify-center border-2 border-gray-300 rounded-lg p-4'>
+              <QRCode value={String(order?.awb_no || order?.order_no || id || '')} size={120} />
               <p className='text-xs text-center mt-2 font-semibold'>Scan QR Code</p>
+              <p className='text-xs text-center mt-1 font-bold text-gray-800'>
+                {order?.awb_no || order?.order_no || 'N/A'}
+              </p>
             </div>
 
-            {/* Order Information */}
-            <div className='col-span-2 space-y-3'>
+            {/* Right Side - Order Information */}
+            <div className='flex-1 space-y-3'>
               <div className='border-b-2 border-gray-200 pb-2'>
                 <p className='text-xs text-gray-600 font-semibold'>ORDER ID</p>
                 <p className='text-lg font-bold text-gray-900'>{order?.order_id || order?.id || 'N/A'}</p>

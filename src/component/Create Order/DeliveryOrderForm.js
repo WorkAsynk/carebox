@@ -10,19 +10,19 @@ import { toast } from 'react-toastify';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useSelector } from 'react-redux';
 import { ROLES } from '../../config/rolePermissions';
+const DeliveryOrderForm = () => {
 
-
-const OrderForm = () => {
-
+    
 	const { user } = useSelector((state) => state.auth);
 	const isAdmin = user?.role === "Delivery Boy";
 	const isFranchise = user?.role === ROLES.FRANCHISE;
 	
 	const [shippingPartner, setShippingPartner] = useState('')
 
-	// Include rate_chart and zones only when carrier is NOT self (regardless of role)
-
-
+	// Only include rate_chart and zones if user is Franchise AND carrier is Self
+	const shouldIncludeRateChartAndZones = isFranchise && shippingPartner?.toLowerCase() === 'self';
+	const rateChart = shouldIncludeRateChartAndZones ? user?.rate_chart : undefined;
+	const zones = shouldIncludeRateChartAndZones ? user?.zones : undefined;
 
 	const [sender, setSender] = useState({
 		id: '',
@@ -54,6 +54,7 @@ const OrderForm = () => {
 	const [createdAWB, setCreatedAWB] = useState('');
 
 	// Shipping Partner
+	const [vehicileno, setvehicileno] = useState('')
 	
 
 	// Reciver address
@@ -291,6 +292,7 @@ const OrderForm = () => {
 		}
 	};
 
+	console.log(user);
 
 
 
@@ -363,18 +365,17 @@ const OrderForm = () => {
 			};
 			const mfInteger = extractMfInteger(user?.mf_no);
 
-
 			// Prepare order data to be sent to the API (only accepted fields)
 			const orderData = {
 				sender_address_id: user?.id || '1',
-				receiver_address_id: selectedReceiverPin ? receiver?.id : receiver || '',
+				receiver_address_id: selectedReceiverPin ? selectedReceiverPin?.id : receiver || '',
 				inv_no: invoiceNo,
 				ewaybill: ewaybillValue,
 				order_id: orderId,
 				order_no: generatedAWB,
 				
 				created_by: user?.id || '1',
-				agent_id: isFranchise? mfInteger : user?.id,
+				// agent_id: "",
 				insurance_type: 'owners risk',
 				// forwarding_no: 'sdsa',
 				carrier: shippingPartner,
@@ -389,17 +390,18 @@ const OrderForm = () => {
 					fragile: Boolean(packageData.fragile),
 					dangerous: Boolean(packageData.dangerous),
 				}],
-				rate_chart: shippingPartner?.toLowerCase() !== 'self' ? user?.rate_chart : "not found",
-				zones: shippingPartner?.toLowerCase() !== 'self' ? user?.zones : "not found",
-				state: receiver?.state,
+				rate_chart: user?.rate_chart,
+				zones: user?.zones,
+					state: receiver?.state,
+					vehicle_number: vehicileno,
 			};
 
-			const url = buildApiUrl(API_ENDPOINTS.CREATE_ORDER);
+			const url = buildApiUrl(API_ENDPOINTS.CREATE_DELIVERY_ORDER);
 			const { data } = await axios.post(url, orderData);
 			setShowSuccess(true);
 			setTimeout(() => {
 				setShowSuccess(false);
-				navigate('/orderlist');
+				navigate('/pickup');
 			}, 1500);
 		} catch (error) {
 			toast.error('Failed to create order');
@@ -447,10 +449,9 @@ const OrderForm = () => {
 			initializeAddresses();
 		}
 	}, [user]);
-
-
-	return (
-		<div className="min-h-screen bg-[#F9FAFB] p-6">
+    
+  return (
+    <div className="min-h-screen bg-[#F9FAFB] p-6">
 			<div className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div className="flex items-center justify-between mb-6">
@@ -484,6 +485,7 @@ const OrderForm = () => {
 
 								</div>
 								{!isAdmin && <Input label="MF Number" disabled={true} value={mfnumber} onChange={(e) => setmfnumber(e.target.value)} placeholder="Enter MF Number" />}
+					{isAdmin && <Input label="Vehicle Number" value={vehicileno} onChange={(e) => setvehicileno(e.target.value)} placeholder="Enter Vehicle Number" />}
 
 								{/* <Select
 									value={mode}
@@ -497,10 +499,10 @@ const OrderForm = () => {
 									onChange={(val) => setShippingPartner(val)}
 									label="Forwarding Partner">
 									<Option value="self">Self</Option>
-									<Option value="Bluedart">Bluedart</Option>
+									{/* <Option value="Bluedart">Bluedart</Option>
 									<Option value="DTDC">DTDC</Option>
 									<Option value="Shree Maruthi">Shree Maruthi</Option>
-									<Option value="Tirupati">Tirupati</Option>
+									<Option value="Tirupati">Tirupati</Option> */}
 								</Select>
 								<Input label='Order ID' value={orderId} onChange={(e) => setOrderID(e.target.value)} placeholder='Enter Order ID' />
 
@@ -823,7 +825,7 @@ const OrderForm = () => {
 				)}
 			</div>
 		</div>
-	);
-};
+  )
+}
 
-export default OrderForm;
+export default DeliveryOrderForm

@@ -3,6 +3,8 @@ import Sidebar from '../component/Layout/Sidebar'
 import Topbar from '../component/Layout/Topbar'
 import { useSelector } from 'react-redux'
 import { Input, Select, Option, Textarea } from '@material-tailwind/react'
+import InvoicePreviewModal from '../components/Invoice/InvoicePreviewModal'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { buildApiUrl, API_ENDPOINTS } from '../config/api'
 import { ROLES } from '../config/rolePermissions'
@@ -16,11 +18,14 @@ import {
   CurrencyDollarIcon,
   ChartBarIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  EyeIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
 
 const BillingInfo = () => {
   const { user } = useSelector((state) => state.auth)
+  const navigate = useNavigate()
   
   // Form state management
   const [billingData, setBillingData] = useState([])
@@ -30,6 +35,8 @@ const BillingInfo = () => {
   const [dateTo, setDateTo] = useState('')
   const [filteredData, setFilteredData] = useState([])
   const [isFetching, setIsFetching] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewInvoice, setPreviewInvoice] = useState(null)
   const todayStr = new Date().toISOString().split('T')[0]
 
   // Set default date range (last 30 days) and auto-fetch
@@ -87,6 +94,7 @@ const BillingInfo = () => {
           awbNumber: order?.awb_no || order?.order_no || '',
           senderLocationPincode: order?.sender_address?.pincode || order?.sender_pincode || '',
           receiverLocationPincode: order?.receiver_address?.pincode || order?.receiver_pincode || '',
+          packageName: order?.package_data?.[0]?.contents_description || '',
           totalParcel: Array.isArray(order?.package_data) ? order.package_data.length : 1,
           totalAmount: Number(order?.amount || order?.total_amount || order?.price || 0),
           clientName: user?.name || 'Client',
@@ -97,7 +105,8 @@ const BillingInfo = () => {
           pendingAmount: Number(order?.amount || order?.total_amount || order?.price || 0),
           billingDate: order?.created_at ? new Date(order.created_at).toISOString().split('T')[0] : todayStr,
           dueDate: order?.created_at ? new Date(order.created_at).toISOString().split('T')[0] : todayStr,
-          status: order?.status || 'Pending'
+          status: order?.status || 'Pending',
+          fullOrder: order
         }))
         setBillingData(mapped)
         setFilteredData(mapped)
@@ -161,7 +170,49 @@ const BillingInfo = () => {
 
   const totals = calculateTotals()
 
+  const handlePreview = (invoice) => {
+    navigate('/billing-invoice', { state: { invoice } })
+  }
+
+  const handleDownload = (invoice) => {
+    // Simple printable view using a new window
+    const printHtml = `
+      <html>
+        <head>
+          <title>Invoice ${invoice.invoiceNumber || invoice.awbNumber || ''}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; }
+            h1 { margin-bottom: 8px; }
+            .section { border: 1px solid #e5e7eb; padding: 16px; margin-top: 16px; border-radius: 8px; }
+            .row { display: flex; justify-content: space-between; margin: 6px 0; }
+            .label { color: #6b7280; }
+            .value { color: #111827; font-weight: 600; }
+          </style>
+        </head>
+        <body>
+          <h1>Invoice Preview</h1>
+          <div class="section">
+            <div class="row"><span class="label">MF Number</span><span class="value">${invoice.mfNumber || ''}</span></div>
+            <div class="row"><span class="label">AWB</span><span class="value">${invoice.awbNumber || ''}</span></div>
+            <div class="row"><span class="label">Total Parcel</span><span class="value">${invoice.totalParcel || 0}</span></div>
+            <div class="row"><span class="label">Amount</span><span class="value">₹${(invoice.totalAmount || invoice.billingAmount || 0).toLocaleString()}</span></div>
+            <div class="row"><span class="label">Bill Date</span><span class="value">${invoice.billingDate || ''}</span></div>
+            <div class="row"><span class="label">Due Date</span><span class="value">${invoice.dueDate || ''}</span></div>
+          </div>
+        </body>
+      </html>`
+    const w = window.open('', '_blank')
+    if (w) {
+      w.document.open()
+      w.document.write(printHtml)
+      w.document.close()
+      w.focus()
+      w.print()
+    }
+  }
+
   return (
+    <>
     <div className='flex'>
       <Sidebar />
       <div className='flex-1'>
@@ -288,88 +339,112 @@ const BillingInfo = () => {
             
             <div className="overflow-x-auto">
               {/* Header Row */}
-              <div className="grid grid-cols-5 text-left bg-black text-white font-semibold px-4 py-3 rounded-t-md text-sm min-w-[700px]">
+              <div className="grid grid-cols-6 text-left bg-black text-white font-semibold px-4 py-3 rounded-t-md text-sm min-w-[900px]">
                 <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">MF Number</div>
                 <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">Total Parcel</div>
                 <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">Total Amount</div>
                 <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">Bill Date</div>
                 <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">Due Date</div>
+                <div className="px-2 py-1 text-xs font-medium text-white uppercase tracking-wider">Actions</div>
               </div>
               {/* Data Rows */}
-              {filteredData.map((item) => (
-                <div
-                  key={item.id}
-                  className="grid grid-cols-5 text-sm px-4 py-3 border-b hover:bg-gray-50 min-w-[700px]"
-                >
-                  <div className="px-2 py-2">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8">
-                        <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                          <DocumentTextIcon className="w-4 h-4 text-red-600" />
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-black">{item.mfNumber}</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="px-2 py-2">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8">
-                        <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center">
-                          <ChartBarIcon className="w-4 h-4 text-white" />
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-black">{item.totalParcel.toLocaleString()}</div>
-                        <div className="text-xs text-gray-500">Parcels</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="px-2 py-2">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8">
-                        <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center">
-                          <CurrencyDollarIcon className="w-4 h-4 text-white" />
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-red-600">₹{item.totalAmount.toLocaleString()}</div>
-                        <div className="text-xs text-gray-500">Amount</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="px-2 py-2">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8">
-                        <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center">
-                          <CalendarIcon className="w-4 h-4 text-white" />
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-black">{new Date(item.billingDate).toLocaleDateString()}</div>
-                        <div className="text-xs text-gray-500">Bill Date</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="px-2 py-2">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8">
-                        <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center">
-                          <CalendarIcon className="w-4 h-4 text-white" />
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-red-600">{new Date(item.dueDate).toLocaleDateString()}</div>
-                        <div className="text-xs text-gray-500">Due Date</div>
-                      </div>
-                    </div>
+              {isFetching ? (
+                <div className="text-center py-12 text-gray-500">
+                  <div className="inline-flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
+                    Loading billing records...
                   </div>
                 </div>
-              ))}
+              ) : (
+                filteredData.map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-6 text-sm px-4 py-3 border-b hover:bg-gray-50 min-w-[900px]"
+                  >
+                    <div className="px-2 py-2">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8">
+                          <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+                            <DocumentTextIcon className="w-4 h-4 text-red-600" />
+                          </div>
+                        </div>
+                        <div className="ml-3">
+                          <button onClick={() => handlePreview(item)} className="text-sm font-medium text-black hover:underline">
+                            {item.mfNumber}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-2 py-2">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8">
+                          <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center">
+                            <ChartBarIcon className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-black">{item.totalParcel.toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">Parcels</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-2 py-2">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8">
+                          <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center">
+                            <CurrencyDollarIcon className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-red-600">₹{item.totalAmount.toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">Amount</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-2 py-2">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8">
+                          <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center">
+                            <CalendarIcon className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-black">{new Date(item.billingDate).toLocaleDateString()}</div>
+                          <div className="text-xs text-gray-500">Bill Date</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-2 py-2">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8">
+                          <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center">
+                            <CalendarIcon className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-red-600">{new Date(item.dueDate).toLocaleDateString()}</div>
+                          <div className="text-xs text-gray-500">Due Date</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-2 py-2">
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => handlePreview(item)}
+                          className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-full transition-colors"
+                          title="Preview"
+                        >
+                           <ArrowDownTrayIcon className="w-4 h-4" />
+                        </button>
+                      
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            {filteredData.length === 0 && (
+            {filteredData.length === 0 && !isFetching && (
               <div className="text-center py-12">
                 <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">No billing records found</h3>
@@ -379,19 +454,26 @@ const BillingInfo = () => {
           </div>
 
           {/* Action Buttons */}
-          {filteredData.length > 0 && (
+          {filteredData.length > 0 && !isFetching && (
             <div className="flex justify-end gap-4 mt-6">
-              <button className="px-6 py-2 border-2 border-black text-black bg-white rounded-lg hover:bg-gray-50 transition-colors shadow-md">
+              {/* <button className="px-6 py-2 border-2 border-black text-black bg-white rounded-lg hover:bg-gray-50 transition-colors shadow-md">
                 Export to Excel
               </button>
               <button className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-md">
                 Generate Report
-              </button>
+              </button> */}
             </div>
           )}
         </div>
       </div>
     </div>
+    <InvoicePreviewModal 
+      open={showPreview} 
+      invoice={previewInvoice} 
+      onClose={() => setShowPreview(false)} 
+      onDownload={() => handleDownload(previewInvoice)} 
+    />
+    </>
   )
 }
 

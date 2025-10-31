@@ -28,58 +28,44 @@ const MultiStepUserForm = () => {
 		password: '',
 	});
 
-	// MF Number generation logic
-	const generateMFNumber = () => {
-		// Get current counter from localStorage or start from 0
-		let mfCounter = parseInt(localStorage.getItem('mfCounter') || '0');
-		
-		console.log('=== MF Number Generation ===');
-		console.log('Current Counter (before increment):', mfCounter);
-		
-		// Increment counter
-		mfCounter += 1;
-		
-		// Save updated counter to localStorage
-		localStorage.setItem('mfCounter', mfCounter.toString());
-		
-		// Generate MF number with 3-digit padding
-		const mfNumber = `MF-${mfCounter.toString().padStart(3, '0')}`;
-		
-		console.log('New Counter (after increment):', mfCounter);
-		console.log('Generated MF Number:', mfNumber);
-		console.log('Next number will be:', `MF-${(mfCounter + 1).toString().padStart(3, '0')}`);
-		
-		return mfNumber;
+	// Unique MF number support using localStorage
+	const USED_MF_KEY = 'usedMfNumbers';
+	const loadUsedMfNumbers = () => {
+		try {
+			const raw = localStorage.getItem(USED_MF_KEY);
+			const arr = raw ? JSON.parse(raw) : [];
+			return Array.isArray(arr) ? arr : [];
+		} catch {
+			return [];
+		}
+	};
+	const saveUsedMfNumbers = (list) => {
+		try {
+			localStorage.setItem(USED_MF_KEY, JSON.stringify(list));
+		} catch {}
 	};
 
-	// Function to reset MF counter (for testing purposes)
-	const resetMFCounter = () => {
-		localStorage.setItem('mfCounter', '0');
-		console.log('MF Counter reset to 0');
-		// Reload the page to update the display
-		window.location.reload();
-	};
+	// Generate MF number in format: MF-<random 4 digits>, avoiding repeats stored locally
+	const generateUniqueMfNumber = useCallback(() => {
+		const usedSet = new Set(loadUsedMfNumbers());
+		let candidate = '';
+		let attempts = 0;
+		do {
+			const num = Math.floor(1000 + Math.random() * 9000); // 1000-9999
+			candidate = `MF-${num}`;
+			attempts += 1;
+		} while (usedSet.has(candidate) && attempts < 100);
+		return candidate;
+	}, []);
 
-	// Function to get current MF counter (for debugging)
-	const getCurrentMFCounter = () => {
-		const counter = parseInt(localStorage.getItem('mfCounter') || '0');
-		console.log('Current MF Counter:', counter);
-		return counter;
-	};
+	// Auto-fill MF number when role is Franchise and it's empty (unique locally)
+	useEffect(() => {
+		if (formData.role === 'Franchise' && !formData.mf_no) {
+			setFormData(prev => ({ ...prev, mf_no: generateUniqueMfNumber() }));
+		}
+	}, [formData.role, formData.mf_no, generateUniqueMfNumber]);
 
-	// Function to show MF number sequence (for debugging)
-	const showMFSequence = () => {
-		const counter = parseInt(localStorage.getItem('mfCounter') || '0');
-		console.log('=== MF Number Sequence ===');
-		console.log('Current Counter:', counter);
-		console.log('Next Number:', `MF-${(counter + 1).toString().padStart(3, '0')}`);
-		console.log('Starting from: MF-001');
-		console.log('Sequence: MF-001, MF-002, MF-003, MF-004, MF-005...');
-		console.log('Line by line: 001, 002, 003, 004, 005...');
-		console.log('First user gets: MF-001');
-		console.log('Second user gets: MF-002');
-		console.log('Third user gets: MF-003');
-	};
+	// MF number generation removed
 
 	const [addressData, setAddressData] = useState({
 		addressLine1: '',
@@ -354,11 +340,9 @@ const MultiStepUserForm = () => {
 		newZoneMapping[targetZone] = [...newZoneMapping[targetZone], state];
 		setZoneMapping(newZoneMapping);
 		
-		// Console log the updated zone mapping
-		console.log('Zone Mapping Updated:', newZoneMapping);
-		console.log('States in each zone:');
+		
 		Object.keys(newZoneMapping).forEach(zone => {
-			console.log(`${zone}: [${newZoneMapping[zone].join(', ')}]`);
+			/* logging removed */
 		});
 	};
 
@@ -368,8 +352,7 @@ const MultiStepUserForm = () => {
 		setZoneMapping(newZoneMapping);
 		
 		// Console log the updated zone mapping
-		console.log('State removed from zone:', state, zone);
-		console.log('Updated Zone Mapping:', newZoneMapping);
+	/* logging removed */
 	};
 
 	// Get available states (not assigned to any zone)
@@ -401,38 +384,10 @@ const MultiStepUserForm = () => {
 
 	// Console log zone mapping changes
 	useEffect(() => {
-		console.log('Zone Mapping State Updated:', zoneMapping);
-		console.log('Available States:', getAvailableStates());
+	/* logging removed */
 	}, [zoneMapping]);
 
-	// Load existing MF number from localStorage on component mount
-	useEffect(() => {
-		// Reset overlay state when component mounts
-		setShowOverlay(false);
-		setOverlayStatus('loading');
-		
-		// Initialize counter to 0 only if it doesn't exist
-		if (!localStorage.getItem('mfCounter')) {
-			localStorage.setItem('mfCounter', '0');
-			console.log('Initialized MF Counter to 0 - Starting from MF-001');
-		}
-		
-		const existingMFCounter = parseInt(localStorage.getItem('mfCounter') || '0');
-		const nextMFNumber = `MF-${(existingMFCounter + 1).toString().padStart(3, '0')}`;
-		
-		setFormData(prev => ({
-			...prev,
-			mf_no: nextMFNumber
-		}));
-		
-		console.log('=== MF Number Preview ===');
-		console.log('Current MF Counter:', existingMFCounter);
-		console.log('Next MF Number will be:', nextMFNumber);
-		console.log('Sequence: MF-001, MF-002, MF-003, etc.');
-		
-		// Show the complete sequence for debugging
-		showMFSequence();
-	}, []);
+	// MF number preview removed
 
 	// Cleanup effect to reset overlay state when component unmounts
 	useEffect(() => {
@@ -447,11 +402,22 @@ const MultiStepUserForm = () => {
 		setShowOverlay(true);
 		setOverlayStatus('loading');
 		
-		// Generate MF number when form is submitted (for all roles)
 		let finalFormData = { ...formData };
-		const mfNumber = generateMFNumber();
-		finalFormData.mf_no = mfNumber;
-		console.log('Generated MF Number on submit:', mfNumber);
+		// Ensure MF number uniqueness at submit time and persist it locally
+		if (finalFormData.role === 'Franchise') {
+			let mf = finalFormData.mf_no || generateUniqueMfNumber();
+			const used = new Set(loadUsedMfNumbers());
+			if (used.has(mf)) {
+				mf = generateUniqueMfNumber();
+				setFormData(prev => ({ ...prev, mf_no: mf }));
+			}
+			finalFormData.mf_no = mf;
+			if (!used.has(mf)) {
+				const arr = Array.from(used);
+				arr.push(mf);
+				saveUsedMfNumbers(arr);
+			}
+		}
 		
 		// Convert rate chart data from array to object format for backend
 		let rateChartForBackend = {};
@@ -472,7 +438,7 @@ const MultiStepUserForm = () => {
 			zones: formData.role === 'Franchise' ? zoneMapping : {}
 		};
 		
-		console.log('Submitting user data with MF number:', completeUserData.mf_no);
+		/* logging removed */
 		dispatch(registerAdmin(completeUserData));
 	};
 
@@ -712,45 +678,25 @@ const MultiStepUserForm = () => {
 									<Option value="Client">Client</Option>
 									<Option value="Operation Manager">Operation Manager</Option>
 									<Option value="Franchise">Franchise</Option>
+									<Option value="Delivery Boy">Delivery Boy</Option>
 								</Select>
 							</div>
 
-							<div className={`transition-all duration-300 overflow-hidden ${formData.role === 'Franchise' ? 'max-h-32 opacity-100 ' : 'max-h-0 opacity-0'}`}>
-								{/* {formData.role === 'Franchise' && formData.mf_no && (
-									<div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
-										<div className="flex items-center justify-between">
-											<div>
-												<p className="text-sm font-semibold text-blue-800">
-													📋 Next MF Number: <span className="font-bold text-blue-900">{formData.mf_no}</span>
-												</p>
-												<p className="text-xs text-blue-600 mt-1">
-													Auto-increments after each user creation
-												</p>
-											</div>
-											<button
-												type="button"
-												onClick={resetMFCounter}
-												className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors duration-200"
-											>
-												Reset Counter
-											</button>
-										</div>
-									</div>
-								)} */}
-								<Input
-									id="mf_no"
-									type="text"
-									name="mf_no"
-									label="MF Number *"
-									value={formData.mf_no}
-									disabled={true}
-									className="!bg-gray-100 !text-gray-700 !border-gray-300"
-									required={formData.role === 'Franchise'}
-								/>
-								<p className="text-xs text-gray-500 mt-1">
-									Preview of next MF number (format: MF-001, MF-002, etc.) - Assigned on form submission
-								</p>
-							</div>
+			{formData.role === 'Franchise' && (
+				<div className="transition-all duration-300">
+					<Input
+						id="mf_no"
+						type="text"
+						name="mf_no"
+						label="MF Number *"
+						disabled={true}
+						value={formData.mf_no}
+						onChange={(e) => setFormData({ ...formData, mf_no: e.target.value })}
+						required
+					/>
+				</div>
+			)}
+			
 
 							<div>
 								<div className="relative">

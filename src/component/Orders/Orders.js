@@ -11,7 +11,7 @@ import { ROLES } from '../../config/rolePermissions';
 import { CSVLink } from 'react-csv';
 
 
-const Orders = ({orders, handleDeleteOrder}) => {
+const Orders = ({orders, handleDeleteOrder, loading: externalLoading}) => {
     const { user } = useSelector(state => state.auth);
     const isAdmin = user?.role === ROLES.ADMIN;
     const isFranchise = user?.role === ROLES.FRANCHISE;
@@ -355,7 +355,7 @@ const Orders = ({orders, handleDeleteOrder}) => {
         </div>
 
             {/* Data Rows */}
-            {loading ? (
+            {(externalLoading ?? loading) ? (
                 <div className="text-center py-12 text-gray-500">
                     <div className="inline-flex items-center gap-2">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
@@ -389,8 +389,8 @@ const Orders = ({orders, handleDeleteOrder}) => {
                             {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
                         </div>
                         <div className="text-gray-700">
-                            <div className="font-medium">{order.sender_name || order.sender?.name || 'N/A'}</div>
-                            {order.mfnumber && (
+                            <div className="font-medium">{order.sender_name || order.sender?.name || order.sender_address?.consignee_name || 'N/A'}</div>
+                            {order.mfnumber && ( 
                                 <div className="text-xs text-gray-500 mt-1">({order.mfnumber})</div>
                             )}
                         </div>
